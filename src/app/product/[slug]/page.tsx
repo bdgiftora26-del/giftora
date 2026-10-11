@@ -10,6 +10,7 @@ import type { Metadata } from 'next'
 
 export const revalidate = 600
 export const dynamicParams = true
+const LOCALE = 'en'
 
 // Pre-render all active product pages at build time.
 export async function generateStaticParams() {
@@ -21,11 +22,6 @@ export async function generateStaticParams() {
   }
 }
 
-async function getLocale(): Promise<string> {
-  const { cookies } = await import('next/headers')
-  const store = await cookies()
-  return store.get('ub_locale')?.value === 'bn' ? 'bn' : 'en'
-}
 
 export async function generateMetadata({
   params,
@@ -33,7 +29,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const locale = await getLocale()
+  const locale = LOCALE
   const product = await db.product.findUnique({
     where: { slug },
     include: { i18n: { where: { locale } }, categories: { include: { category: { include: { i18n: true } } } } },
@@ -54,7 +50,7 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const locale = await getLocale()
+  const locale = LOCALE
 
   const product = await db.product.findUnique({
     where: { slug },
