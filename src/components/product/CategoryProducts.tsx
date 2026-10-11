@@ -1,0 +1,87 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
+import { SortControl } from '@/components/product/SortControl'
+
+const PER_PAGE = 48
+
+const SORTS = ['default', 'price-asc', 'price-desc', 'name-asc', 'popular', 'newest'] as const
+type Sort = (typeof SORTS)[number]
+
+export function CategoryProducts({ products, initialSort = 'default' }: { products: ProductCardData[]; initialSort?: string }) {
+  const [sort, setSort] = useState<Sort>((SORTS as readonly string[]).includes(initialSort) ? (initialSort as Sort) : 'default')
+  const [page, setPage] = useState(1)
+
+  const sorted = useMemo(() => {
+    const arr = [...products]
+    if (sort === 'price-asc') arr.sort((a, b) => a.priceBdt - b.priceBdt)
+    else if (sort === 'price-desc') arr.sort((a, b) => b.priceBdt - a.priceBdt)
+    else if (sort === 'name-asc') arr.sort((a, b) => a.name.localeCompare(b.name))
+    else if (sort === 'popular') arr.sort((a, b) => b.orderCount - a.orderCount)
+    else if (sort === 'newest') arr.sort((a, b) => (b.firstSoldYear || 0) - (a.firstSoldYear || 0))
+    return arr
+  }, [products, sort])
+
+  const total = sorted.length
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
+  const safePage = Math.min(page, totalPages)
+  const paged = sorted.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE)
+
+  return (
+    <>
+      <div className="category-toolbar">
+        <span>Total {total} Products</span>
+        <label>
+          Sort By:{' '}
+          <select
+            className="sort-select"
+            value={sort}
+            onChange={(e) => {
+              setSort(e.target.value as Sort)
+              setPage(1)
+            }}
+          >
+            <option value="default">Default</option>
+            <option value="price-asc">Price low→high</option>
+            <option value="price-desc">Price high→low</option>
+            <option value="name-asc">Name A→Z</option>
+            <option value="popular">Most ordered</option>
+            <option value="newest">Newest</option>
+          </select>
+        </label>
+      </div>
+
+      {paged.length === 0 ? (
+        <p className="muted">No products in this category yet.</p>
+      ) : (
+        <div className="product-grid">
+          {paged.map((p) => (
+            <ProductCard key={p.id} p={p} />
+          ))}
+        </div>
+      )}
+
+      <div className="product-footer-bar">Showing {paged.length} products</div>
+
+      {totalPages > 1 && (
+        <div className="pager">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => {
+                setPage(n)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              className={n === safePage ? 'pager-current' : ''}
+              style={{ background: 'none', cursor: 'pointer' }}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
