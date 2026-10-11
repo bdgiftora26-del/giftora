@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/admin-auth'
 import { db } from '@/lib/db'
 import { toNumber } from '@/lib/money'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
@@ -12,9 +11,7 @@ export default async function AdminProductsPage({
 }: {
   searchParams: Promise<{ q?: string }>
 }) {
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
-  if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'EDITOR') redirect('/account')
+  await requireAdminSession()
 
   const sp = await searchParams
   const q = sp.q || ''
@@ -84,6 +81,8 @@ function ToggleActive({ id, active }: { id: number; active: boolean }) {
     <form
       action={async () => {
         'use server'
+        const { getAdminSession } = await import('@/lib/admin-auth')
+        if (!(await getAdminSession())) throw new Error('Unauthorized')
         await db.product.update({ where: { id }, data: { isActive: !active } })
       }}
       style={{ display: 'inline' }}

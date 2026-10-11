@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/admin-auth'
 import { db } from '@/lib/db'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
 import { CategoryIcon } from '@/components/CategoryIcon'
@@ -8,9 +7,7 @@ import { CategoryIcon } from '@/components/CategoryIcon'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminCategoriesPage() {
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
-  if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'EDITOR') redirect('/account')
+  await requireAdminSession()
 
   const categories = await db.category.findMany({
     where: { parentId: null },

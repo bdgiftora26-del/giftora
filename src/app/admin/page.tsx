@@ -1,18 +1,14 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/admin-auth'
 import { db } from '@/lib/db'
 import { toNumber } from '@/lib/money'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
+import { AdminLogoutButton } from '@/components/admin/AdminLogoutButton'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
-  if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'EDITOR') {
-    redirect('/account')
-  }
+  await requireAdminSession()
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -36,7 +32,10 @@ export default async function AdminDashboard() {
     <StorefrontShell>
       <div style={{ padding: '12px 16px' }}>
         <h1 className="category-h1">Admin Dashboard</h1>
-        <p className="checkout-helper">Welcome, {user.firstName || user.email}. Manage your store below.</p>
+        <p className="checkout-helper">
+          Welcome, Administrator. Manage your store below.
+          <AdminLogoutButton />
+        </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
           <StatCard label="Orders Today" value={String(ordersToday)} />

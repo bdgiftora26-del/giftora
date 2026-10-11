@@ -1,15 +1,12 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/admin-auth'
 import { db } from '@/lib/db'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminBannersPage() {
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
-  if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'EDITOR') redirect('/account')
+  await requireAdminSession()
 
   const [mosaic, tiles] = await Promise.all([
     db.banner.findMany({ where: { placement: 'HOME_MOSAIC' }, orderBy: { sortOrder: 'asc' } }),

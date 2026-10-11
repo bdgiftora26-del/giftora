@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/admin-auth'
 import { db } from '@/lib/db'
 import { toNumber } from '@/lib/money'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
@@ -15,9 +14,7 @@ export default async function AdminOrdersPage({
 }: {
   searchParams: Promise<{ status?: string }>
 }) {
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
-  if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'EDITOR') redirect('/account')
+  await requireAdminSession()
 
   const sp = await searchParams
   const statusFilter = sp.status && (STATUSES as readonly string[]).includes(sp.status) ? sp.status : undefined

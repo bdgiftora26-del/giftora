@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getAdminSession } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(req: Request) {
-  const user = await getCurrentUser()
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'EDITOR')) {
+  const isAdmin = await getAdminSession()
+  if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -30,7 +30,7 @@ export async function PATCH(req: Request) {
       orderId: order.id,
       type: 'STATUS_CHANGED',
       note: `Status changed to ${status}`,
-      actorId: user.id,
+      actorId: 'admin',
     },
   })
 
