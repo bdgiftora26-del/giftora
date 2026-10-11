@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+    <rect width="400" height="400" fill="#e0eef9"/>
+    <circle cx="200" cy="200" r="160" fill="#ffffff" opacity="0.55"/>
+    <circle cx="200" cy="200" r="120" fill="#ffffff" opacity="0.75"/>
+    <g color="#9ec93f" transform="translate(104,104) scale(8)">
+<ellipse cx="12" cy="9" rx="5" ry="6" fill="currentColor"/>
+<path d="M11 15 L11.5 18 L12.5 18 L13 15 Z" fill="currentColor"/>
+<path d="M12 18 Q10 21 11 22 M12 18 Q14 21 13 22" fill="none" stroke="currentColor" stroke-width="1"/></g>
+    <text x="200" y="370" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="600" fill="#9ec93f" text-anchor="middle" opacity="0.75">kids</text>
+  </svg>

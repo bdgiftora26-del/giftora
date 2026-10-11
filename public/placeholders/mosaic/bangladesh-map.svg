@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="240" viewBox="0 0 200 240">
+    <rect width="200" height="240" fill="#ffffff"/>
+    <path d="M70 30 C90 18 120 22 140 35 C160 48 175 70 178 95 C180 120 170 145 158 165 C148 182 130 200 108 205 C85 210 62 200 48 184 C32 165 22 140 24 110 C26 78 40 50 70 30 Z"
+          fill="#4a9c2e" stroke="#3a7d22" stroke-width="2"/>
+    <ellipse cx="100" cy="120" rx="6" ry="4" fill="#ffffff" opacity="0.45"/>
+    <text x="100" y="225" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700" fill="#4a9c2e" text-anchor="middle">Bangladesh</text>
+  </svg>

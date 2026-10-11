@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+    <rect width="400" height="400" fill="#fff4e0"/>
+    <circle cx="200" cy="200" r="160" fill="#ffffff" opacity="0.55"/>
+    <circle cx="200" cy="200" r="120" fill="#ffffff" opacity="0.75"/>
+    <g color="#2b6fb0" transform="translate(104,104) scale(8)">
+<path d="M10 3 L14 3 L16.2 6.5 L14 8.5 L13.2 21 L10.8 21 L10 8.5 L7.8 6.5 Z" fill="currentColor"/></g>
+    <text x="200" y="370" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="600" fill="#2b6fb0" text-anchor="middle" opacity="0.75">him</text>
+  </svg>

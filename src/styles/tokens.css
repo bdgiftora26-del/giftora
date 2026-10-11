@@ -1,0 +1,57 @@
+/* Design tokens — UpoharBd clone. Colour values approximate the reference look. */
+:root {
+  /* Brand */
+  --c-green: #4a9c2e;
+  --c-green-dark: #3a7d22;
+  --c-green-soft: #eaf5e4;
+  --c-red: #d6443a;
+  --c-red-orange: #e0492f;
+  --c-orange: #f08a24;
+  --c-orange-dark: #d9730e;
+  --c-blue: #2b6fb0;
+  --c-teal: #2fa6a0;
+  --c-lime: #9ec93f;
+  --c-pink: #f6c6d4;
+  --c-pink-soft: #fbeef2;
+
+  /* Neutrals */
+  --c-bg: #ececec;
+  --c-canvas: #f4f4f4;
+  --c-content: #ffffff;
+  --c-line: #e2e2e2;
+  --c-line-strong: #cfcfcf;
+  --c-text: #333333;
+  --c-text-soft: #666666;
+  --c-text-muted: #8a8a8a;
+
+  /* Mosaic pastels */
+  --c-pastel-blue: #dceaf5;
+  --c-pastel-red: #f7dedc;
+  --c-pastel-teal: #dbefed;
+  --c-pastel-lime: #e7f0d4;
+  --c-pastel-pink: #f7e1ea;
+
+  /* Sizing */
+  --content-width: 1040px;
+  --sidebar-width: 232px;
+  --topbar-h: 30px;
+  --header-h: 84px;
+
+  /* Fonts */
+  --font-sans: Arial, Helvetica, 'Noto Sans Bengali', 'Hind Siliguri', sans-serif;
+  --font-script: 'Pacifico', 'Dancing Script', cursive;
+
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-mid: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+:root.dark {
+  --c-bg: #1a1a1a;
+  --c-canvas: #141414;
+  --c-content: #1f1f1f;
+  --c-line: #2e2e2e;
+  --c-line-strong: #3a3a3a;
+  --c-text: #e6e6e6;
+  --c-text-soft: #b0b0b0;
+  --c-text-muted: #888888;
+}

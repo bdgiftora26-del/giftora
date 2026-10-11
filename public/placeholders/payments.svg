@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="40" viewBox="0 0 600 40"><rect width="600" height="40" fill="#f8fafc"/>
+      <g>
+        <rect x="6.75" y="6" width="78" height="28" rx="6" fill="#4a9c2e"/>
+        <text x="45.75" y="21" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">VISA</text>
+      </g>
+      <g>
+        <rect x="91.5" y="6" width="78" height="28" rx="6" fill="#6b7280"/>
+        <text x="130.5" y="21" font-family="ui-sans-serif, system-ui, sans-serif" font-size="8" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">MasterCard</text>
+      </g>
+      <g>
+        <rect x="176.25" y="6" width="78" height="28" rx="6" fill="#2b6fb0"/>
+        <text x="215.25" y="21" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">AMEX</text>
+      </g>
+      <g>
+        <rect x="261" y="6" width="78" height="28" rx="6" fill="#4a9c2e"/>
+        <text x="300" y="21" font-family="ui-sans-serif, system-ui, sans-serif" font-size="9" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">PayPal</text>
+      </g>
+      <g>
+        <rect x="345.75" y="6" width="78" height="28" rx="6" fill="#6b7280"/>
+        <text x="384.75" y="21" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">bKash</text>
+      </g>
+      <g>
+        <rect x="430.5" y="6" width="78" height="28" rx="6" fill="#2b6fb0"/>
+        <text x="469.5" y="21" font-family="ui-sans-serif, system-ui, sans-serif" font-size="8" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">Western Union</text>
+      </g>
+      <g>
+        <rect x="515.25" y="6" width="78" height="28" rx="6" fill="#4a9c2e"/>
+        <text x="554.25" y="21" font-family="ui-sans-serif, system-ui, sans-serif" font-size="8" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">Norton Secured</text>
+      </g></svg>

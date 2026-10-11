@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+    <rect width="400" height="400" fill="#fce4ec"/>
+    <circle cx="200" cy="200" r="160" fill="#ffffff" opacity="0.55"/>
+    <circle cx="200" cy="200" r="120" fill="#ffffff" opacity="0.75"/>
+    <g color="#2b6fb0" transform="translate(104,104) scale(8)">
+<path d="M9.5 3 L14.5 3 L16.5 6 L21 8 L19 12.5 L17 10.5 L17 21 L7 21 L7 10.5 L5 12.5 L3 8 L7.5 6 Z" fill="currentColor"/></g>
+    <text x="200" y="370" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="600" fill="#2b6fb0" text-anchor="middle" opacity="0.75">dress</text>
+  </svg>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    <rect width="1200" height="630" fill="#4a9c2e"/>
+    <rect x="0" y="0" width="1200" height="630" fill="url(#og-grad)"/>
+    <defs>
+      <linearGradient id="og-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#4a9c2e" stop-opacity="1"/>
+        <stop offset="100%" stop-color="#357a1f" stop-opacity="1"/>
+      </linearGradient>
+    </defs>
+    <!-- decorative confetti -->
+    <g opacity="0.25">
+      <rect x="80" y="80" width="14" height="14" fill="#9ec93f" transform="rotate(20 87 87)"/>
+      <rect x="1080" y="120" width="18" height="18" fill="#f08a24" transform="rotate(45 1089 129)"/>
+      <rect x="980" y="500" width="16" height="16" fill="#f6c6d4" transform="rotate(15 988 508)"/>
+      <rect x="140" y="520" width="12" height="12" fill="#ffffff" transform="rotate(30 146 526)"/>
+      <circle cx="1120" cy="380" r="8" fill="#9ec93f"/>
+      <circle cx="100" cy="300" r="6" fill="#ffffff"/>
+    </g>
+    <!-- gift icon -->
+    <g transform="translate(160,210)">
+      <rect x="0" y="0" width="12" height="12" rx="2" fill="#9ec93f"/><rect x="13.5" y="0" width="12" height="12" rx="2" fill="#f6c6d4"/><rect x="27" y="0" width="12" height="12" rx="2" fill="#ffffff"/><rect x="40.5" y="0" width="12" height="12" rx="2" fill="#f08a24"/><rect x="0" y="13.5" width="12" height="12" rx="2" fill="#f6c6d4"/><rect x="13.5" y="13.5" width="12" height="12" rx="2" fill="#f08a24"/><rect x="27" y="13.5" width="12" height="12" rx="2" fill="#9ec93f"/><rect x="40.5" y="13.5" width="12" height="12" rx="2" fill="#ffffff"/><rect x="0" y="27" width="12" height="12" rx="2" fill="#ffffff"/><rect x="13.5" y="27" width="12" height="12" rx="2" fill="#9ec93f"/><rect x="27" y="27" width="12" height="12" rx="2" fill="#f6c6d4"/><rect x="40.5" y="27" width="12" height="12" rx="2" fill="#f08a24"/><rect x="0" y="40.5" width="12" height="12" rx="2" fill="#f08a24"/><rect x="13.5" y="40.5" width="12" height="12" rx="2" fill="#ffffff"/><rect x="27" y="40.5" width="12" height="12" rx="2" fill="#9ec93f"/><rect x="40.5" y="40.5" width="12" height="12" rx="2" fill="#f6c6d4"/><rect x="13.25" y="-4" width="2" height="60.5" rx="1" fill="#ffffff" opacity="0.9"/><rect x="-4" y="13.25" width="60.5" height="2" rx="1" fill="#ffffff" opacity="0.9"/><path d="M14.25 -4 C4.25 -16, -1.75 -4, 14.25 2 C30.25 -4, 24.25 -16, 14.25 -4 Z" fill="#ffffff"/>
+    </g>
+    <!-- wordmark -->
+    <text x="470" y="305" font-family="ui-sans-serif, system-ui, sans-serif" font-size="96" font-weight="800" fill="#ffffff">UpoharBd</text>
+    <text x="475" y="365" font-family="ui-sans-serif, system-ui, sans-serif" font-size="34" font-weight="500" fill="#eaf6e2">Gift Delivery in Bangladesh</text>
+    <rect x="475" y="400" width="220" height="4" rx="2" fill="#9ec93f"/>
+    <text x="475" y="455" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" fill="#dfeecf" opacity="0.9">Cakes · Flowers · Teddies · Hampers · Sweets</text>
+  </svg>
