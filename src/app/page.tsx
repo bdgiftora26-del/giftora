@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { allSettledFallback } from '@/lib/db-resilient'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
 import { PromoMosaic } from '@/components/home/PromoMosaic'
 import { Testimonials, type TestimonialData } from '@/components/home/Testimonials'
@@ -6,34 +7,49 @@ import { CategoryTiles, type TileData } from '@/components/home/CategoryTiles'
 import { AboutSection } from '@/components/home/AboutSection'
 import Link from 'next/link'
 
-async function getLocale(): Promise<string> {
-  const { cookies } = await import('next/headers')
-  const store = await cookies()
-  return store.get('ub_locale')?.value === 'bn' ? 'bn' : 'en'
-}
+// Home page is fully static + ISR. No per-request DB hit (resilient + fast).
+// Locale for client UI (promo/testimonials labels) is handled client-side via useT().
+// CMS 'home-about' + SEO links default to 'en' (acceptable; most traffic is EN).
+const LOCALE = 'en'
 
-export const revalidate = 300
+export const revalidate = 600
 
 export default async function HomePage() {
-  const locale = await getLocale()
-
-  const [testimonials, totalApproved, tiles, homeAbout, allCategories] = await Promise.all([
-    db.testimonial.findMany({
-      where: { approved: true },
-      orderBy: { createdAt: 'desc' },
-      take: 3,
-    }) as Promise<TestimonialData[]>,
-    db.testimonial.count({ where: { approved: true } }),
-    db.banner.findMany({
-      where: { placement: 'HOME_TILES', isActive: true },
-      orderBy: { sortOrder: 'asc' },
-    }),
-    db.cmsPage.findUnique({ where: { slug_locale: { slug: 'home-about', locale } } }),
-    db.category.findMany({
-      where: { parentId: null, isActive: true },
-      include: { i18n: true },
-      orderBy: { sortOrder: 'asc' },
-    }),
+  const [testimonials, totalApproved, tiles, homeAbout, allCategories] = await allSettledFallback([
+    {
+      run: () =>
+        db.testimonial.findMany({
+          where: { approved: true },
+          orderBy: { createdAt: 'desc' },
+          take: 3,
+        }) as Promise<TestimonialData[]>,
+      fallback: [] as TestimonialData[],
+    },
+    {
+      run: () => db.testimonial.count({ where: { approved: true } }),
+      fallback: 0 as number,
+    },
+    {
+      run: () =>
+        db.banner.findMany({
+          where: { placement: 'HOME_TILES', isActive: true },
+          orderBy: { sortOrder: 'asc' },
+        }),
+      fallback: [] as Awaited<ReturnType<typeof db.banner.findMany>>,
+    },
+    {
+      run: () => db.cmsPage.findUnique({ where: { slug_locale: { slug: 'home-about', locale: LOCALE } } }),
+      fallback: null as Awaited<ReturnType<typeof db.cmsPage.findUnique>>,
+    },
+    {
+      run: () =>
+        db.category.findMany({
+          where: { parentId: null, isActive: true },
+          include: { i18n: true },
+          orderBy: { sortOrder: 'asc' },
+        }),
+      fallback: [] as Awaited<ReturnType<typeof db.category.findMany>>,
+    },
   ])
 
   const tileData: TileData[] = tiles.map((b, i) => ({
@@ -45,7 +61,7 @@ export default async function HomePage() {
 
   const seoLinks = allCategories
     .map((c) => {
-      const i18n = c.i18n.find((x) => x.locale === locale) || c.i18n.find((x) => x.locale === 'en')
+      const i18n = c.i18n.find((x) => x.locale === LOCALE) || c.i18n.find((x) => x.locale === 'en')
       return { name: i18n?.name || c.slug, href: `/${c.slug}` }
     })
     .sort((a, b) => a.name.localeCompare(b.name))
@@ -67,15 +83,17 @@ export default async function HomePage() {
       </div>
 
       {/* SEO link list (home only) */}
-      <section className="seo-links" aria-label="All categories">
-        <div className="seo-links-grid">
-          {seoLinks.map((l) => (
-            <Link key={l.href} href={l.href}>
-              {l.name}
-            </Link>
-          ))}
-        </div>
-      </section>
+      {seoLinks.length > 0 && (
+        <section className="seo-links" aria-label="All categories">
+          <div className="seo-links-grid">
+            {seoLinks.map((l) => (
+              <Link key={l.href} href={l.href}>
+                {l.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </StorefrontShell>
   )
 }
