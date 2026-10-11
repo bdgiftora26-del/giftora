@@ -203,3 +203,24 @@ Stage Summary:
 - Brand fully rebranded to BDGiftora.com on live site
 - Logo, wordmark, title, metadata, order prefix all updated
 - Contact info (email/phone/address) still placeholders — awaiting owner's real details
+
+---
+Task ID: widen-layout
+Agent: main
+Task: Widen layout to match upoharbd.com (user said reference is wider)
+
+Work Log:
+- Analyzed upoharbd.com stylesheets: container=1170px, max-width=1366px (our site was 1040px)
+- Updated tokens.css: --content-width 1040px → 1170px, --sidebar-width 232px → 245px
+- Added @media (min-width: 1280px) large-desktop breakpoint:
+  - Promo tiles: min-height 175px, circles 130px, cursive 22px
+  - Category tiles: max-width 175px, images 140px, labels 13px, padding 12px
+  - Product cards: images 150px, names 14px, prices 16px, gap 14px
+  - Product main image 340px
+- Base tiles-grid: gap 10px, tiles min 150px/max 175px (was 130/150)
+- Verified locally at 1366px: canvas=1170px, 6 tiles/row, VLM confirmed "well-proportioned, professional"
+- Pushed (commit ba161f0), Vercel deployed, live CSS verified: --content-width:1170px
+
+Stage Summary:
+- Layout now matches reference site width (1170px container)
+- All routes 200 on live; category tiles + product cards scaled up for wider canvas
