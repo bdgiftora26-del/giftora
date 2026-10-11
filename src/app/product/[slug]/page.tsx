@@ -8,7 +8,18 @@ import { AddToBasket, type VariantData } from '@/components/product/AddToBasket'
 import { toNumber } from '@/lib/money'
 import type { Metadata } from 'next'
 
-export const revalidate = 300
+export const revalidate = 600
+export const dynamicParams = true
+
+// Pre-render all active product pages at build time.
+export async function generateStaticParams() {
+  try {
+    const products = await db.product.findMany({ where: { isActive: true }, select: { slug: true } })
+    return products.map((p) => ({ slug: p.slug }))
+  } catch {
+    return []
+  }
+}
 
 async function getLocale(): Promise<string> {
   const { cookies } = await import('next/headers')
