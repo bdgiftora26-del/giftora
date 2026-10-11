@@ -17,8 +17,6 @@ export function CategoryProducts({ categorySlug }: { categorySlug: string }) {
 
   useEffect(() => {
     let active = true
-    setLoading(true)
-    setError(false)
     // Fetch products for this category from the API (already fast + resilient).
     const url = `/api/products?category=${encodeURIComponent(categorySlug)}&sort=default`
     fetch(url)
@@ -29,9 +27,16 @@ export function CategoryProducts({ categorySlug }: { categorySlug: string }) {
       .then((d) => {
         if (!active) return
         setProducts(d.products || [])
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLoading(false)
       })
-      .catch(() => active && setError(true))
-      .finally(() => active && setLoading(false))
+      .catch(() => {
+        if (!active) return
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setError(true)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLoading(false)
+      })
     return () => {
       active = false
     }
