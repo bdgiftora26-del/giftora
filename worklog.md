@@ -177,3 +177,29 @@ Results (verified on live):
 Stage Summary:
 - Server-side exception eliminated; site stable and fast on https://giftora-two.vercel.app
 - 2 commits pushed (da6eb7b resilience + a437011 static cache)
+
+---
+Task ID: rebrand
+Agent: main
+Task: Rebrand UpoharBd → BDGiftora.com with custom logo
+
+Work Log:
+- Analyzed uploaded logo via VLM: purple circle badge, gift-box icon (red body + purple ribbon), text "BDGiftora.com" (BD=red, Giftora=purple, .com=red)
+- Copied logo to /public/brand-logo.jpg (1254x1254 JPEG, 73KB)
+- Added brand purple (#5b2a86) + brand red to design tokens
+- Updated src/config/site.ts: brand='BDGiftora.com', brandParts={first:'BD',second:'Giftora',third:'.com'}, brandColors (red/purple/red), logoUrl, orderPrefix='BG', email/phone placeholders @bdgiftora.com
+- Updated Header.tsx: circular logo image (52px) + styled wordmark (BD=red, Giftora=purple, .com=red smaller) + mobile responsive
+- Updated layout.tsx metadata: title, description, keywords, OG image, favicon → brand logo
+- Updated all 'UpoharBd' references → 'BDGiftora' (footer testimonial, product/category SEO, checkout bank details, testimonials page, README)
+- Order prefix: UB → BG (now reads from siteConfig.orderPrefix, no longer hardcoded)
+- Verified locally + VLM confirmed: logo + wordmark render correctly, professional look
+- Pushed (commit 0bc5367), Vercel auto-deployed, live verified:
+  - Title: "BDGiftora.com — Gift Delivery in Bangladesh"
+  - Logo image served (200, 73KB)
+  - Home 200 @ 0.27s (cached)
+- Gitignored upload/ folder (user uploads)
+
+Stage Summary:
+- Brand fully rebranded to BDGiftora.com on live site
+- Logo, wordmark, title, metadata, order prefix all updated
+- Contact info (email/phone/address) still placeholders — awaiting owner's real details
