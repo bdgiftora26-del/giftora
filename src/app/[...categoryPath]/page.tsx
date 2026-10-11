@@ -7,45 +7,12 @@ import type { ProductCardData } from '@/components/product/ProductCard'
 import { toNumber } from '@/lib/money'
 import type { Metadata } from 'next'
 
-// Fully static ISR — pre-render all category + CMS paths at build time,
-// new paths render on-demand and get cached (ISR).
+// ISR: pages render on-demand on first hit, then cached for 600s.
+// (generateStaticParams removed — 231 pages was too slow on Vercel Hobby build;
+//  on-demand ISR gives same caching benefit without the long build.)
 export const revalidate = 600
 export const dynamicParams = true
 const LOCALE = 'en'
-
-// Pre-render all category paths (top-level + nested) + CMS single-segment slugs.
-export async function generateStaticParams() {
-  try {
-    const all = await db.category.findMany({ select: { id: true, slug: true, parentId: true, isActive: true } })
-    const byParent = new Map<number | null, typeof all>()
-    for (const c of all) {
-      const arr = byParent.get(c.parentId) || []
-      arr.push(c)
-      byParent.set(c.parentId, arr)
-    }
-    const params: { categoryPath: string[] }[] = []
-    const walk = (parentId: number | null, acc: string[]) => {
-      const children = byParent.get(parentId) || []
-      for (const c of children) {
-        if (!c.isActive) continue
-        const path = [...acc, c.slug]
-        params.push({ categoryPath: path })
-        walk(c.id, path)
-      }
-    }
-    walk(null, [])
-    // Add CMS single-segment slugs
-    const cms = await db.cmsPage.findMany({ where: { locale: 'en' }, select: { slug: true } })
-    for (const c of cms) {
-      if (!params.some((p) => p.categoryPath[0] === c.slug)) {
-        params.push({ categoryPath: [c.slug] })
-      }
-    }
-    return params
-  } catch {
-    return []
-  }
-}
 
 export async function generateMetadata({
   params,

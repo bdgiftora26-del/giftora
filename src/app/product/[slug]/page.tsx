@@ -12,16 +12,6 @@ export const revalidate = 600
 export const dynamicParams = true
 const LOCALE = 'en'
 
-// Pre-render all active product pages at build time.
-export async function generateStaticParams() {
-  try {
-    const products = await db.product.findMany({ where: { isActive: true }, select: { slug: true } })
-    return products.map((p) => ({ slug: p.slug }))
-  } catch {
-    return []
-  }
-}
-
 
 export async function generateMetadata({
   params,
