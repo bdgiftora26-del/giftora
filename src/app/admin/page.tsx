@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { requireAdminSession } from '@/lib/admin-auth'
 import { db } from '@/lib/db'
+import { allSettledFallback } from '@/lib/db-resilient'
 import { toNumber } from '@/lib/money'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
 import { AdminLogoutButton } from '@/components/admin/AdminLogoutButton'
@@ -12,21 +13,19 @@ export default async function AdminDashboard() {
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const [ordersToday, totalRevenue, pendingPayment, awaitingPayment, lowStock, totalProducts, totalOrders] = await Promise.all([
-    db.order.count({ where: { createdAt: { gte: today } } }),
-    db.order.aggregate({ where: { status: 'PAID' }, _sum: { totalBdt: true } }),
-    db.order.count({ where: { status: 'PROCESSING' } }),
-    db.order.count({ where: { status: 'AWAITING_PAYMENT' } }),
-    db.product.count({ where: { stockMode: 'TRACKED', stockQty: { lt: 5 } } }),
-    db.product.count(),
-    db.order.count(),
+  const [ordersToday, totalRevenue, pendingPayment, awaitingPayment, lowStock, totalProducts, totalOrders, recentOrders] = await allSettledFallback([
+    { run: () => db.order.count({ where: { createdAt: { gte: today } } }), fallback: 0 as number },
+    { run: () => db.order.aggregate({ where: { status: 'PAID' }, _sum: { totalBdt: true } }), fallback: { _sum: { totalBdt: 0 } } },
+    { run: () => db.order.count({ where: { status: 'PROCESSING' } }), fallback: 0 as number },
+    { run: () => db.order.count({ where: { status: 'AWAITING_PAYMENT' } }), fallback: 0 as number },
+    { run: () => db.product.count({ where: { stockMode: 'TRACKED', stockQty: { lt: 5 } } }), fallback: 0 as number },
+    { run: () => db.product.count(), fallback: 0 as number },
+    { run: () => db.order.count(), fallback: 0 as number },
+    {
+      run: () => db.order.findMany({ orderBy: { createdAt: 'desc' }, take: 8, include: { delivery: { include: { city: true } } } }),
+      fallback: [] as Awaited<ReturnType<typeof db.order.findMany>>,
+    },
   ])
-
-  const recentOrders = await db.order.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 8,
-    include: { delivery: { include: { city: true } } },
-  })
 
   return (
     <StorefrontShell>

@@ -5,16 +5,13 @@ import { StorefrontShell, resolveCategoryPath } from '@/components/layout/Storef
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
 import { SortControl } from '@/components/product/SortControl'
+import { allSettledFallback } from '@/lib/db-resilient'
 import { toNumber } from '@/lib/money'
 import type { Metadata } from 'next'
 
-export const revalidate = 300
-
-async function getLocale(): Promise<string> {
-  const { cookies } = await import('next/headers')
-  const store = await cookies()
-  return store.get('ub_locale')?.value === 'bn' ? 'bn' : 'en'
-}
+// Static ISR — sidebar locale defaults to 'en'; keeps page cacheable for fast + resilient loads.
+export const revalidate = 600
+const LOCALE = 'en'
 
 const SORTS = ['default', 'price-asc', 'price-desc', 'name-asc', 'popular', 'newest'] as const
 type Sort = (typeof SORTS)[number]
@@ -27,14 +24,35 @@ export async function generateMetadata({
   params: Promise<{ categoryPath: string[] }>
 }): Promise<Metadata> {
   const { categoryPath } = await params
-  const locale = await getLocale()
-  const resolved = await resolveCategoryPath(categoryPath, locale)
-  if (!resolved || resolved.length === 0) return {}
-  const cat = resolved[resolved.length - 1]
-  return {
-    title: cat.name,
-    description: cat.description || `${cat.name} — BDGiftora gift delivery in Bangladesh`,
+  try {
+    const resolved = await resolveCategoryPath(categoryPath, LOCALE)
+    if (!resolved || resolved.length === 0) return {}
+    const cat = resolved[resolved.length - 1]
+    return {
+      title: cat.name,
+      description: cat.description || `${cat.name} — BDGiftora gift delivery in Bangladesh`,
+    }
+  } catch {
+    return {}
   }
+}
+
+// Fetch a category and ALL its descendants in ONE query (instead of recursive calls).
+// Works by fetching all categories, then filtering the subtree in memory.
+async function getCategorySubtreeIds(rootId: number): Promise<number[]> {
+  const all = await db.category.findMany({ select: { id: true, parentId: true } })
+  const ids = new Set<number>([rootId])
+  let added = true
+  while (added) {
+    added = false
+    for (const c of all) {
+      if (c.parentId !== null && ids.has(c.parentId) && !ids.has(c.id)) {
+        ids.add(c.id)
+        added = true
+      }
+    }
+  }
+  return [...ids]
 }
 
 export default async function CategoryPage({
@@ -46,15 +64,15 @@ export default async function CategoryPage({
 }) {
   const { categoryPath } = await params
   const sp = await searchParams
-  const locale = await getLocale()
 
-  const resolved = await resolveCategoryPath(categoryPath, locale)
+  // Resolve path + CMS fallback (tolerant of transient DB errors)
+  const resolved = await resolveCategoryPath(categoryPath, LOCALE).catch(() => null)
 
-  // Fallback: single-segment CMS page (about-us, how-to-order-gift, etc.)
   if ((!resolved || resolved.length === 0) && categoryPath.length === 1) {
     const slug = categoryPath[0]
-    const cms = await db.cmsPage.findUnique({ where: { slug_locale: { slug, locale } } })
-      ?? (locale !== 'en' ? await db.cmsPage.findUnique({ where: { slug_locale: { slug, locale: 'en' } } }) : null)
+    const cms = await db.cmsPage
+      .findUnique({ where: { slug_locale: { slug, locale: LOCALE } } })
+      .catch(() => null)
     if (cms) {
       return (
         <StorefrontShell withSidebar>
@@ -77,50 +95,81 @@ export default async function CategoryPage({
   const sort = (SORTS as readonly string[]).includes(sp.sort || '') ? (sp.sort as Sort) : 'default'
   const page = Math.max(1, parseInt(sp.page || '1', 10) || 1)
 
-  // Gather this category and all descendant category ids
-  const collectIds = async (parentId: number): Promise<number[]> => {
-    const children = await db.category.findMany({ where: { parentId } })
-    const ids = [parentId]
-    for (const c of children) {
-      ids.push(...(await collectIds(c.id)))
-    }
-    return ids
-  }
-  const categoryIds = await collectIds(leaf.id)
+  // Optimized: single query for subtree ids, then single product query.
+  // Wrapped in allSettledFallback so a transient DB error doesn't crash the page.
+  const [categoryIds, products] = await allSettledFallback<
+    [number[], Awaited<ReturnType<typeof db.product.findMany>>]
+  >([
+    {
+      run: () => getCategorySubtreeIds(leaf.id),
+      fallback: [leaf.id] as number[],
+    },
+    {
+      run: () =>
+        db.product.findMany({
+          where: {
+            isActive: true,
+            categories: { some: { categoryId: { in: [leaf.id] } } },
+          },
+          include: {
+            i18n: { where: { locale: LOCALE } },
+            images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+          },
+          orderBy:
+            sort === 'price-asc'
+              ? { priceBdt: 'asc' }
+              : sort === 'price-desc'
+                ? { priceBdt: 'desc' }
+                : sort === 'popular'
+                  ? { orderCount: 'desc' }
+                  : sort === 'newest'
+                    ? { createdAt: 'desc' }
+                    : { slug: 'asc' },
+        }),
+      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
+    },
+  ])
 
-  let products = await db.product.findMany({
-    where: {
-      isActive: true,
-      categories: { some: { categoryId: { in: categoryIds } } },
-    },
-    include: {
-      i18n: { where: { locale } },
-      images: { orderBy: { sortOrder: 'asc' }, take: 1 },
-    },
-    orderBy:
-      sort === 'price-asc'
-        ? { priceBdt: 'asc' }
-        : sort === 'price-desc'
-          ? { priceBdt: 'desc' }
-          : sort === 'popular'
-            ? { orderCount: 'desc' }
-            : sort === 'newest'
-              ? { createdAt: 'desc' }
-              : { slug: 'asc' },
-  })
+  // If subtree has descendants, re-fetch products for the whole subtree in one query
+  // (only when there are descendants beyond the leaf, to avoid an extra call for leaf categories)
+  let finalProducts = products
+  if (categoryIds.length > 1) {
+    finalProducts = await db.product
+      .findMany({
+        where: {
+          isActive: true,
+          categories: { some: { categoryId: { in: categoryIds } } },
+        },
+        include: {
+          i18n: { where: { locale: LOCALE } },
+          images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+        },
+        orderBy:
+          sort === 'price-asc'
+            ? { priceBdt: 'asc' }
+            : sort === 'price-desc'
+              ? { priceBdt: 'desc' }
+              : sort === 'popular'
+                ? { orderCount: 'desc' }
+                : sort === 'newest'
+                  ? { createdAt: 'desc' }
+                  : { slug: 'asc' },
+      })
+      .catch(() => products)
+  }
 
   if (sort === 'name-asc') {
-    products = [...products].sort((a, b) => {
+    finalProducts = [...finalProducts].sort((a, b) => {
       const an = a.i18n[0]?.name || a.slug
       const bn = b.i18n[0]?.name || b.slug
       return an.localeCompare(bn)
     })
   }
 
-  const total = products.length
+  const total = finalProducts.length
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
   const safePage = Math.min(page, totalPages)
-  const paged = products.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE)
+  const paged = finalProducts.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE)
 
   const cardData: ProductCardData[] = paged.map((p) => ({
     id: p.id,
