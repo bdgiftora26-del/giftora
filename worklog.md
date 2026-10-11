@@ -119,3 +119,36 @@ Stage Summary:
 - Full storefront + checkout + admin + APIs working and browser-verified.
 - 123 products, 108 categories, 6 currencies, 3 cities, 14 testimonials, 44 banners, 14 CMS pages seeded.
 - Ready for git remote push (user will share credentials next).
+
+---
+Task ID: deploy
+Agent: main
+Task: Migrate DB to Supabase PostgreSQL, push to GitHub, deploy to Vercel
+
+Work Log:
+- Decoded Supabase service_role JWT → project ref: ymquocspwnnfpjitziow (region: ap-northeast-1/Tokyo)
+- Verified credentials: GitHub user bdgiftora26-del, Vercel team giftora3 (team_gdRy1O8MGAcbDizxoe0yT2T8)
+- Supabase direct DB is IPv6-only (unreachable from sandbox); used IPv4 pooler instead
+- Probed all Supabase pooler regions; project found in ap-northeast-1
+- Converted Prisma schema SQLite → PostgreSQL: provider=postgresql, added @db.Decimal(12,2)/(18,8) annotations, kept String? for JSON-stub fields (works identically)
+- Pushed schema to Supabase via pooler (session mode port 5432): success
+- Seeded Supabase: 3 cities, 6 currencies, 10 vendors, 108 categories, 123 products, 44 banners, 14 testimonials, 14 CMS pages, 12 slot rules, 4 coupons, 1 admin user
+- Reset Postgres sequences for clean IDs
+- Git: untracked .env (contains live creds), committed schema migration, pushed to github.com/bdgiftora26-del/giftora (existing repo, was empty)
+- Vercel: created project "giftora" linked to GitHub repo, set 6 env vars (DATABASE_URL, DIRECT_URL, AUTH_SECRET, ADMIN_PASSWORD, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY), disabled SSO protection (public)
+- First deploy: home/API 500 — Prisma couldn't connect in serverless with session pooler (port 5432)
+- Fix: switched DATABASE_URL to transaction pooler (port 6543 + pgbouncer=true&connection_limit=1), added directUrl (DIRECT_URL session pooler port 5432) for migrations
+- Second deploy: all green — home 200, currency API returns data, 123 products, checkout flow creates order UB-2026-000002 in Supabase
+
+Live URLs:
+- Production: https://giftora-two.vercel.app
+- Aliases: https://giftora-giftora3.vercel.app, https://giftora-git-main-giftora3.vercel.app
+- GitHub: https://github.com/bdgiftora26-del/giftora
+- Supabase project: https://ymquocspwnnfpjitziow.supabase.co
+
+Stage Summary:
+- DB: Supabase PostgreSQL (ap-northeast-1) via transaction pooler — fully operational
+- Code: pushed to GitHub (2 commits: initial + Supabase migration + pooler fix)
+- Deploy: Vercel production deployment live and verified (home, category, product, cart, checkout, admin all 200)
+- Secrets: .env untracked, .env.example has placeholders only, live creds only in Vercel env vars + local .env (gitignored)
+- Ready for branding update (user will share original name/contact/logo next)
