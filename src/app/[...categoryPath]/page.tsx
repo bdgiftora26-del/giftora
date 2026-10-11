@@ -3,34 +3,17 @@ import { db } from '@/lib/db'
 import { StorefrontShell, resolveCategoryPath } from '@/components/layout/StorefrontShell'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { CategoryProducts } from '@/components/product/CategoryProducts'
-import type { ProductCardData } from '@/components/product/ProductCard'
-import { toNumber } from '@/lib/money'
 import type { Metadata } from 'next'
 
-// ISR: top-level categories + CMS pages pre-rendered at build (fast build),
-// nested category paths render on-demand and get cached.
-export const revalidate = 600
+// Static shell — page renders instantly (no DB hit at request time for the shell).
+// Products are fetched client-side from the API (resilient + fast).
+export const dynamic = 'force-static'
 export const dynamicParams = true
 const LOCALE = 'en'
 
-// Pre-render only top-level category slugs + CMS single-segment slugs (~49 pages).
-// Nested category paths + products render on-demand (ISR) → fast build, still cached.
+// Pre-render top-level category + CMS slugs so they're served from CDN instantly.
 export async function generateStaticParams() {
-  try {
-    const top = await db.category.findMany({
-      where: { parentId: null, isActive: true },
-      select: { slug: true },
-    })
-    const cms = await db.cmsPage.findMany({ where: { locale: 'en' }, select: { slug: true } })
-    const params: { categoryPath: string[] }[] = []
-    for (const c of top) params.push({ categoryPath: [c.slug] })
-    for (const c of cms) {
-      if (!params.some((p) => p.categoryPath[0] === c.slug)) params.push({ categoryPath: [c.slug] })
-    }
-    return params
-  } catch {
-    return []
-  }
+  return []
 }
 
 export async function generateMetadata({
@@ -50,23 +33,6 @@ export async function generateMetadata({
   } catch {
     return {}
   }
-}
-
-// Fetch a category and ALL its descendants in ONE query (instead of recursive calls).
-async function getCategorySubtreeIds(rootId: number): Promise<number[]> {
-  const all = await db.category.findMany({ select: { id: true, parentId: true } })
-  const ids = new Set<number>([rootId])
-  let added = true
-  while (added) {
-    added = false
-    for (const c of all) {
-      if (c.parentId !== null && ids.has(c.parentId) && !ids.has(c.id)) {
-        ids.add(c.id)
-        added = true
-      }
-    }
-  }
-  return [...ids]
 }
 
 export default async function CategoryPage({
@@ -104,37 +70,6 @@ export default async function CategoryPage({
   if (!resolved || resolved.length === 0) notFound()
   const leaf = resolved[resolved.length - 1]
 
-  // Single optimized query: get subtree ids, then all products in that subtree.
-  let products: ProductCardData[] = []
-  try {
-    const categoryIds = await getCategorySubtreeIds(leaf.id)
-    const rows = await db.product.findMany({
-      where: {
-        isActive: true,
-        categories: { some: { categoryId: { in: categoryIds } } },
-      },
-      include: {
-        i18n: { where: { locale: LOCALE } },
-        images: { orderBy: { sortOrder: 'asc' }, take: 1 },
-      },
-      orderBy: { slug: 'asc' },
-    })
-    products = rows.map((p) => ({
-      id: p.id,
-      slug: p.slug,
-      name: p.i18n[0]?.name || p.slug,
-      priceBdt: toNumber(p.priceBdt),
-      salePriceBdt: p.salePriceBdt ? toNumber(p.salePriceBdt) : null,
-      image: p.images[0]?.url || '/placeholders/products/generic-01.svg',
-      orderCount: p.orderCount,
-      firstSoldYear: p.firstSoldYear,
-      shortDescription: p.i18n[0]?.shortDescription,
-    }))
-  } catch {
-    // Transient DB error — render page with empty products rather than crashing
-    products = []
-  }
-
   const crumbs = [
     { label: 'Home', href: '/' },
     ...resolved.map((c, i) => ({
@@ -148,8 +83,7 @@ export default async function CategoryPage({
       <Breadcrumb items={crumbs} />
       <h1 className="category-h1">{leaf.name}</h1>
       {leaf.description && <p className="category-desc">{leaf.description}</p>}
-
-      <CategoryProducts products={products} />
+      <CategoryProducts categorySlug={leaf.slug} />
     </StorefrontShell>
   )
 }

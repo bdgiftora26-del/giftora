@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
 
 const PER_PAGE = 48
@@ -8,9 +8,34 @@ const PER_PAGE = 48
 const SORTS = ['default', 'price-asc', 'price-desc', 'name-asc', 'popular', 'newest'] as const
 type Sort = (typeof SORTS)[number]
 
-export function CategoryProducts({ products }: { products: ProductCardData[] }) {
+export function CategoryProducts({ categorySlug }: { categorySlug: string }) {
+  const [products, setProducts] = useState<ProductCardData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [sort, setSort] = useState<Sort>('default')
   const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+    setError(false)
+    // Fetch products for this category from the API (already fast + resilient).
+    const url = `/api/products?category=${encodeURIComponent(categorySlug)}&sort=default`
+    fetch(url)
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed')
+        return r.json()
+      })
+      .then((d) => {
+        if (!active) return
+        setProducts(d.products || [])
+      })
+      .catch(() => active && setError(true))
+      .finally(() => active && setLoading(false))
+    return () => {
+      active = false
+    }
+  }, [categorySlug])
 
   const sorted = useMemo(() => {
     const arr = [...products]
@@ -30,7 +55,7 @@ export function CategoryProducts({ products }: { products: ProductCardData[] }) 
   return (
     <>
       <div className="category-toolbar">
-        <span>Total {total} Products</span>
+        <span>Total {loading ? '…' : total} Products</span>
         <label>
           Sort By:{' '}
           <select
@@ -40,6 +65,7 @@ export function CategoryProducts({ products }: { products: ProductCardData[] }) 
               setSort(e.target.value as Sort)
               setPage(1)
             }}
+            disabled={loading}
           >
             <option value="default">Default</option>
             <option value="price-asc">Price low→high</option>
@@ -51,7 +77,11 @@ export function CategoryProducts({ products }: { products: ProductCardData[] }) 
         </label>
       </div>
 
-      {paged.length === 0 ? (
+      {loading ? (
+        <p className="muted">Loading products…</p>
+      ) : error ? (
+        <p className="muted">Could not load products right now. Please refresh the page.</p>
+      ) : paged.length === 0 ? (
         <p className="muted">No products in this category yet.</p>
       ) : (
         <div className="product-grid">
@@ -61,7 +91,9 @@ export function CategoryProducts({ products }: { products: ProductCardData[] }) 
         </div>
       )}
 
-      <div className="product-footer-bar">Showing {paged.length} products</div>
+      {!loading && (
+        <div className="product-footer-bar">Showing {paged.length} products</div>
+      )}
 
       {totalPages > 1 && (
         <div className="pager">
