@@ -2,15 +2,14 @@
 
 import { useMemo, useState } from 'react'
 import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
-import { SortControl } from '@/components/product/SortControl'
 
 const PER_PAGE = 48
 
 const SORTS = ['default', 'price-asc', 'price-desc', 'name-asc', 'popular', 'newest'] as const
 type Sort = (typeof SORTS)[number]
 
-export function CategoryProducts({ products, initialSort = 'default' }: { products: ProductCardData[]; initialSort?: string }) {
-  const [sort, setSort] = useState<Sort>((SORTS as readonly string[]).includes(initialSort) ? (initialSort as Sort) : 'default')
+export function CategoryProducts({ products }: { products: ProductCardData[] }) {
+  const [sort, setSort] = useState<Sort>('default')
   const [page, setPage] = useState(1)
 
   const sorted = useMemo(() => {

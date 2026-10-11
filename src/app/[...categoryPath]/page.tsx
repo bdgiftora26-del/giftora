@@ -7,12 +7,31 @@ import type { ProductCardData } from '@/components/product/ProductCard'
 import { toNumber } from '@/lib/money'
 import type { Metadata } from 'next'
 
-// ISR: pages render on-demand on first hit, then cached for 600s.
-// (generateStaticParams removed — 231 pages was too slow on Vercel Hobby build;
-//  on-demand ISR gives same caching benefit without the long build.)
+// ISR: top-level categories + CMS pages pre-rendered at build (fast build),
+// nested category paths render on-demand and get cached.
 export const revalidate = 600
 export const dynamicParams = true
 const LOCALE = 'en'
+
+// Pre-render only top-level category slugs + CMS single-segment slugs (~49 pages).
+// Nested category paths + products render on-demand (ISR) → fast build, still cached.
+export async function generateStaticParams() {
+  try {
+    const top = await db.category.findMany({
+      where: { parentId: null, isActive: true },
+      select: { slug: true },
+    })
+    const cms = await db.cmsPage.findMany({ where: { locale: 'en' }, select: { slug: true } })
+    const params: { categoryPath: string[] }[] = []
+    for (const c of top) params.push({ categoryPath: [c.slug] })
+    for (const c of cms) {
+      if (!params.some((p) => p.categoryPath[0] === c.slug)) params.push({ categoryPath: [c.slug] })
+    }
+    return params
+  } catch {
+    return []
+  }
+}
 
 export async function generateMetadata({
   params,
