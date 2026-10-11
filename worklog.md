@@ -224,3 +224,41 @@ Work Log:
 Stage Summary:
 - Layout now matches reference site width (1170px container)
 - All routes 200 on live; category tiles + product cards scaled up for wider canvas
+
+---
+Task ID: admin-auth
+Agent: main
+Task: Build separate admin auth system — secret login URL + strong credentials
+
+Work Log:
+- Generated strong random secret URL path (24-char) + admin username + 24-char password via crypto
+- Created src/lib/admin-auth.ts: separate admin session cookie (ub_admin_session, 8h expiry), HMAC-signed; verifyAdminCredentials with constant-time comparison; requireAdminSession() returns 404 (not redirect) to avoid leaking secret URL
+- Created /admin-access/[secret] dynamic route: validates secret segment against ADMIN_SECRET_PATH env; wrong/missing secret → notFound() (404)
+- Built branded admin login page (purple gradient, shield icon, "Admin Access / BDGiftora Control Panel", "Authorized personnel only · All access is logged")
+- Created /api/admin-auth/{login,logout,status} routes; login has 400ms delay on failure (anti-brute-force)
+- Updated all /admin/* pages (dashboard, products, orders, categories, banners) to use requireAdminSession() instead of customer getCurrentUser()
+- Updated /api/admin/orders PATCH to check admin session
+- Updated ToggleActive server action to check admin session
+- Added AdminLogoutButton client component to dashboard
+- Customer /login no longer grants admin access (separate auth systems)
+- Set env vars on Vercel: ADMIN_USERNAME, ADMIN_PANEL_PASSWORD, ADMIN_SECRET_PATH
+- Renamed admin panel password env to ADMIN_PANEL_PASSWORD (avoid conflict with seed's ADMIN_PASSWORD)
+
+Credentials (in env, NOT in repo):
+- Secret login URL: /admin-access/vPjoADvRUhSfJ_jm
+- Username: bdgiftora.admin
+- Password: 4BY0HdQZHRj57jFXDLqvQg7K!
+
+Live verification (all passed):
+- /admin without session → 404 (secret URL not leaked)
+- /admin-access/vPjoADvRUhSfJ_jm → 200 (login page)
+- /admin-access/wrongsecret → 404
+- Login correct creds → {ok:true, redirect:/admin}
+- /admin with session → 200, /admin/orders → 200
+- Wrong password → 401 {error:Invalid credentials}
+- VLM confirmed: "secure, professional, distinct from customer login"
+
+Stage Summary:
+- Admin panel now fully separated: secret URL + strong credentials + separate session
+- Customer accounts cannot access admin
+- Secret URL unguessable; /admin returns 404 to scanners
