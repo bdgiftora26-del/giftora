@@ -152,3 +152,28 @@ Stage Summary:
 - Deploy: Vercel production deployment live and verified (home, category, product, cart, checkout, admin all 200)
 - Secrets: .env untracked, .env.example has placeholders only, live creds only in Vercel env vars + local .env (gitignored)
 - Ready for branding update (user will share original name/contact/logo next)
+
+---
+Task ID: fix-server-exception
+Agent: main
+Task: Fix "Application error: a server-side exception" on Vercel
+
+Root cause:
+- Home page used Promise.all for 5 parallel DB queries → any transient Supabase pooler hiccup (cold start / connection limit) crashed the entire page
+- StorefrontShell always read cookies() → made home page dynamic → no ISR cache → every request hit DB (~5s, fragile)
+
+Fixes:
+- Added src/lib/db-resilient.ts: withRetry (retry on transient pooler errors) + allSettledFallback (tolerate individual query failures)
+- Rewrote home page to use allSettledFallback with fallbacks — page renders even if a query fails
+- Made home page truly static ISR (revalidate 600s): StorefrontShell skips cookie read when withSidebar=false
+- Added src/app/error.tsx global boundary with friendly "Something went wrong" + Try again / Back to Home UX
+
+Results (verified on live):
+- Home page: 200 stable across 8 consecutive hits (was intermittent 500)
+- ISR cache working: x-vercel-cache: HIT, cold 0.27s, warm 0.04s (was ~5s every hit)
+- All 14 storefront routes return 200
+- All 4 API routes return 200
+
+Stage Summary:
+- Server-side exception eliminated; site stable and fast on https://giftora-two.vercel.app
+- 2 commits pushed (da6eb7b resilience + a437011 static cache)
