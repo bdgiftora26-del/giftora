@@ -36,9 +36,9 @@
   --c-pastel-lime: #e7f0d4;
   --c-pastel-pink: #f7e1ea;
 
-  /* Sizing */
-  --content-width: 1040px;
-  --sidebar-width: 232px;
+  /* Sizing — matches upoharbd.com (container 1170px) */
+  --content-width: 1170px;
+  --sidebar-width: 245px;
   --topbar-h: 30px;
   --header-h: 84px;
 
