@@ -111,7 +111,7 @@ export async function POST(req: Request) {
 
       // 4. Order number
       const year = new Date().getFullYear()
-      const prefix = 'UB'
+      const prefix = (await import('@/config/site')).siteConfig.orderPrefix
       const count = await tx.order.count()
       const orderNo = `${prefix}-${year}-${String(count + 1).padStart(6, '0')}`
 

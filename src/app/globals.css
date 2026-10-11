@@ -180,19 +180,34 @@ h4 {
 .logo-block {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   text-decoration: none;
 }
-.logo-word {
+.logo-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.logo-wordmark {
   font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.5px;
+  line-height: 1;
+  white-space: nowrap;
 }
 .logo-first {
-  color: #333;
+  font-weight: 800;
 }
 .logo-second {
-  color: var(--c-red);
+  font-weight: 700;
+}
+.logo-third {
+  font-size: 14px;
+  font-weight: 600;
+  vertical-align: baseline;
+  margin-left: 1px;
 }
 .logo-tag {
   display: none;
@@ -1327,6 +1342,16 @@ h4 {
   .header-inner {
     flex-wrap: wrap;
     padding: 10px;
+  }
+  .logo-img {
+    width: 44px;
+    height: 44px;
+  }
+  .logo-wordmark {
+    font-size: 20px;
+  }
+  .logo-third {
+    font-size: 12px;
   }
   .search-form {
     order: 3;

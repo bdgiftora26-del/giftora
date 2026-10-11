@@ -51,7 +51,7 @@ export function Footer() {
           <div className="footer-info-col footer-testimonial">
             <div className="footer-info-title">Testimonial</div>
             <p className="footer-quote">
-              &ldquo;My mother received the cake on time with a beautiful card. Thank you UpoharBd for
+              &ldquo;My mother received the cake on time with a beautiful card. Thank you BDGiftora for
               making the day special from so far away.&rdquo;
             </p>
           </div>

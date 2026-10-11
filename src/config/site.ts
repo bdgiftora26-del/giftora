@@ -2,18 +2,23 @@
 // Owner-editable parts mirror DB Setting rows at runtime.
 
 export const siteConfig = {
-  brand: 'UpoharBd',
-  brandParts: { first: 'Upohar', second: 'Bd' },
+  brand: 'BDGiftora.com',
+  brandShort: 'BDGiftora',
+  brandParts: { first: 'BD', second: 'Giftora', third: '.com' },
+  // Wordmark colours match the uploaded logo (BD=red, Giftora=purple, .com=red)
+  brandColors: { first: 'var(--c-brand-red)', second: 'var(--c-brand-purple)', third: 'var(--c-brand-red)' },
+  logoUrl: '/brand-logo.jpg',
   tagline: 'Gift Delivery in Bangladesh',
   taglineBn: 'বাংলাদেশে উপহার ডেলিভারি',
-  legalName: 'Upohar Bangladesh',
+  legalName: 'BDGiftora',
   abn: '00 000 000 000',
-  tradeLicense: 'Gift Delivery Service Trading License in Bangladesh: Dhaka-1234 (Sample)',
-  email: 'support@upoharbd.example',
+  tradeLicense: 'Gift Delivery Service Trading License in Bangladesh: Dhaka-1234 (Sample — update with real license)',
+  // Contact info — placeholders until owner provides real details
+  email: 'support@bdgiftora.com',
   phone: '+880 1700-000000',
   address: 'Gulshan, Dhaka 1212, Bangladesh',
   defaultCitySlug: 'dhaka',
-  orderPrefix: 'UB',
+  orderPrefix: 'BG',
   defaultCurrency: 'USD',
   currencies: ['USD', 'BDT', 'GBP', 'AUD', 'CAD', 'EUR'] as const,
   locales: ['en', 'bn'] as const,

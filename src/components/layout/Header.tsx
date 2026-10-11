@@ -20,12 +20,19 @@ export function Header() {
     <header className="site-header">
       <div className="header-inner">
         <Link href="/" className="logo-block" aria-label={siteConfig.brand}>
-          <img src="/placeholders/logo.svg" alt={siteConfig.brand} width={120} height={40} />
-          <span className="logo-word">
-            <span className="logo-first">{siteConfig.brandParts.first}</span>
-            <span className="logo-second">{siteConfig.brandParts.second}</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={siteConfig.logoUrl}
+            alt={siteConfig.brand}
+            className="logo-img"
+            width={52}
+            height={52}
+          />
+          <span className="logo-wordmark">
+            <span className="logo-first" style={{ color: siteConfig.brandColors.first }}>BD</span>
+            <span className="logo-second" style={{ color: siteConfig.brandColors.second }}>Giftora</span>
+            <span className="logo-third" style={{ color: siteConfig.brandColors.third }}>.com</span>
           </span>
-          <span className="logo-tag">{siteConfig.tagline}</span>
         </Link>
         <form className="search-form" onSubmit={onSearch} role="search">
           <input

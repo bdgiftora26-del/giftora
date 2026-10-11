@@ -1,6 +1,12 @@
-# UpoharBd — Gift Delivery E-commerce (Next.js Clone)
+# BDGiftora.com — Gift Delivery E-commerce (Next.js)
 
-A production-quality online gift-delivery store for Bangladesh (cakes, flowers, food, gifts) built with Next.js 16, TypeScript, Tailwind CSS, and Prisma. Structurally modeled on upoharbd.com — all assets, branding, and product data are original/placeholder.
+A production-quality online gift-delivery store for Bangladesh (cakes, flowers, food, gifts) built with Next.js 16, TypeScript, Tailwind CSS, and Prisma. Structurally modeled on upoharbd.com — storefront assets, branding, and product data are original/placeholder.
+
+## Brand
+
+- **Brand name**: BDGiftora.com
+- **Tagline**: Gift Delivery in Bangladesh
+- **Logo**: `/public/brand-logo.jpg` (purple circle badge with gift-box icon + wordmark)
 
 ## Features
 
@@ -105,4 +111,4 @@ public/placeholders/  # Generated SVG assets (logo, icons, products, tiles)
 
 - All images are generated SVG placeholders under `/public/placeholders/` — every image slot is admin-replaceable.
 - Product names, prices, and testimonials are fake sample data.
-- Brand name `UpoharBd` / tagline `Gift Delivery in Bangladesh` come from `src/config/site.ts`.
+- Brand name `BDGiftora.com` / tagline `Gift Delivery in Bangladesh` come from `src/config/site.ts`.

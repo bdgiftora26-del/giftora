@@ -17,7 +17,7 @@ export default async function TestimonialsPage() {
         <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Testimonials' }]} />
         <h1 className="category-h1">What Our Customers Say</h1>
         <p className="category-desc">
-          Real stories from customers who sent love across the miles with UpoharBd.
+          Real stories from customers who sent love across the miles with BDGiftora.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 16 }}>

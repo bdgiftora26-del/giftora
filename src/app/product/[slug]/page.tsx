@@ -29,7 +29,7 @@ export async function generateMetadata({
   })
   if (!product) return {}
   const name = product.i18n[0]?.name || product.slug
-  const desc = product.i18n[0]?.shortDescription || `${name} — UpoharBd`
+  const desc = product.i18n[0]?.shortDescription || `${name} — BDGiftora`
   return {
     title: name,
     description: desc,

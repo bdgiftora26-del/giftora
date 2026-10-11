@@ -57,7 +57,7 @@ export default async function CompletePage({
             </p>
             <div style={{ fontSize: 12, marginTop: 8 }}>
               <p><strong>Bank:</strong> Example Bank Ltd, Gulshan Branch, Dhaka</p>
-              <p><strong>Account Name:</strong> Upohar Bangladesh</p>
+              <p><strong>Account Name:</strong> BDGiftora</p>
               <p><strong>Account No:</strong> 1234 5678 9012</p>
               <p><strong>bKash (Personal):</strong> 01700-000000 (Send Money)</p>
             </div>

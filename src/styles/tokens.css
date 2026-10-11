@@ -1,4 +1,4 @@
-/* Design tokens — UpoharBd clone. Colour values approximate the reference look. */
+/* Design tokens — BDGiftora.com. Storefront palette from reference; brand purple from logo. */
 :root {
   /* Brand */
   --c-green: #4a9c2e;
@@ -13,6 +13,11 @@
   --c-lime: #9ec93f;
   --c-pink: #f6c6d4;
   --c-pink-soft: #fbeef2;
+
+  /* Brand (BDGiftora logo colors) */
+  --c-brand-purple: #5b2a86;
+  --c-brand-purple-dark: #4a1f6e;
+  --c-brand-red: #d6443a;
 
   /* Neutrals */
   --c-bg: #ececec;

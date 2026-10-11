@@ -33,7 +33,7 @@ export async function generateMetadata({
   const cat = resolved[resolved.length - 1]
   return {
     title: cat.name,
-    description: cat.description || `${cat.name} — UpoharBd gift delivery in Bangladesh`,
+    description: cat.description || `${cat.name} — BDGiftora gift delivery in Bangladesh`,
   }
 }
 
