@@ -22,7 +22,9 @@ export async function StorefrontShell({
   withSidebar?: boolean
   activeSlug?: string
 }) {
-  const locale = await getLocale()
+  // Only read locale cookie when sidebar is shown — keeps sidebar-less pages
+  // (like the ISR-cached home page) fully static.
+  const locale = withSidebar ? await getLocale() : 'en'
   const categories: SidebarCategory[] = withSidebar ? await getSidebarCategories(locale) : []
 
   return (
