@@ -6,12 +6,10 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { Footer } from '@/components/layout/Footer'
 import { FloatingDiscount } from '@/components/layout/FloatingDiscount'
 
-// Read locale from cookie (server side)
-async function getLocale(): Promise<string> {
-  const { cookies } = await import('next/headers')
-  const store = await cookies()
-  return store.get('ub_locale')?.value === 'bn' ? 'bn' : 'en'
-}
+// NOTE: We intentionally do NOT read cookies() here. Reading cookies makes the
+// route dynamic (no ISR cache), which caused 5-10s loads + cold-start crashes.
+// Sidebar category names render in English; the rest of the UI (top bar, footer)
+// is client-side via useT() which reads the locale cookie in the browser.
 
 export async function StorefrontShell({
   children,
@@ -22,10 +20,7 @@ export async function StorefrontShell({
   withSidebar?: boolean
   activeSlug?: string
 }) {
-  // Only read locale cookie when sidebar is shown — keeps sidebar-less pages
-  // (like the ISR-cached home page) fully static.
-  const locale = withSidebar ? await getLocale() : 'en'
-  const categories: SidebarCategory[] = withSidebar ? await getSidebarCategories(locale) : []
+  const categories: SidebarCategory[] = withSidebar ? await getSidebarCategories('en') : []
 
   return (
     <div className="app-root">
