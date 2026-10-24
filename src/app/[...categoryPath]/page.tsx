@@ -11,23 +11,10 @@ export const revalidate = 600
 export const dynamic = 'force-dynamic'
 const LOCALE = 'en'
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ categoryPath: string[] }>
-}): Promise<Metadata> {
-  const { categoryPath } = await params
-  try {
-    const resolved = await resolveCategoryPath(categoryPath, LOCALE)
-    if (!resolved || resolved.length === 0) return {}
-    const cat = resolved[resolved.length - 1]
-    return {
-      title: cat.name,
-      description: cat.description || `${cat.name} — BDGiftora gift delivery in Bangladesh`,
-    }
-  } catch {
-    return {}
-  }
+// Static metadata (no DB query at build time — avoids Vercel build failures)
+export const metadata: Metadata = {
+  title: 'BDGift.com — Send Gifts to Bangladesh',
+  description: 'Send gifts, cakes, flowers, and more to Bangladesh. Serving since 2004.',
 }
 
 export default async function CategoryPage({

@@ -13,25 +13,10 @@ export const dynamic = 'force-dynamic'
 const LOCALE = 'en'
 
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}): Promise<Metadata> {
-  const { slug } = await params
-  const locale = LOCALE
-  const product = await db.product.findUnique({
-    where: { slug },
-    include: { i18n: { where: { locale } }, categories: { include: { category: { include: { i18n: true } } } } },
-  })
-  if (!product) return {}
-  const name = product.i18n[0]?.name || product.slug
-  const desc = product.i18n[0]?.shortDescription || `${name} — BDGiftora`
-  return {
-    title: name,
-    description: desc,
-    openGraph: { title: name, description: desc, images: [] },
-  }
+// Static metadata (no DB query at build time — avoids Vercel build failures)
+export const metadata: Metadata = {
+  title: 'Product — BDGift.com',
+  description: 'Send gifts to Bangladesh. Serving since 2004.',
 }
 
 export default async function ProductPage({
