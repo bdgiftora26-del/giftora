@@ -65,6 +65,44 @@ export default async function CategoryPage({
   if (!resolved || resolved.length === 0) notFound()
   const leaf = resolved[resolved.length - 1]
 
+  // Fetch products server-side (force-dynamic = runtime only, not build-time)
+  let products: any[] = []
+  try {
+    const { toNumber } = await import('@/lib/money')
+    // Get this category + all descendants
+    const allCats = await db.category.findMany({ select: { id: true, parentId: true } })
+    const catIds = new Set<number>([leaf.id])
+    let added = true
+    while (added) {
+      added = false
+      for (const c of allCats) {
+        if (c.parentId !== null && catIds.has(c.parentId) && !catIds.has(c.id)) {
+          catIds.add(c.id)
+          added = true
+        }
+      }
+    }
+    const rows = await db.product.findMany({
+      where: { isActive: true, categories: { some: { categoryId: { in: [...catIds] } } } },
+      include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
+      orderBy: { orderCount: 'desc' },
+      take: 100,
+    })
+    products = rows.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.i18n[0]?.name || p.slug,
+      priceBdt: toNumber(p.priceBdt),
+      salePriceBdt: p.salePriceBdt ? toNumber(p.salePriceBdt) : null,
+      image: p.images[0]?.url || '/placeholders/products/generic-01.svg',
+      orderCount: p.orderCount,
+      firstSoldYear: p.firstSoldYear,
+      shortDescription: p.i18n[0]?.shortDescription,
+    }))
+  } catch {
+    products = []
+  }
+
   const crumbs = [
     { label: 'Home', href: '/' },
     ...resolved.map((c, i) => ({
@@ -78,7 +116,7 @@ export default async function CategoryPage({
       <Breadcrumb items={crumbs} />
       <h1 className="category-h1">{leaf.name}</h1>
       {leaf.description && <p className="category-desc">{leaf.description}</p>}
-      <CategoryProducts categorySlug={leaf.slug} />
+      <CategoryProducts products={products} />
     </StorefrontShell>
   )
 }

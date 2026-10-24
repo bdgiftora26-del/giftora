@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
 
 const PER_PAGE = 48
@@ -8,39 +8,9 @@ const PER_PAGE = 48
 const SORTS = ['default', 'price-asc', 'price-desc', 'name-asc', 'popular', 'newest'] as const
 type Sort = (typeof SORTS)[number]
 
-export function CategoryProducts({ categorySlug }: { categorySlug: string }) {
-  const [products, setProducts] = useState<ProductCardData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+export function CategoryProducts({ products }: { products: ProductCardData[] }) {
   const [sort, setSort] = useState<Sort>('default')
   const [page, setPage] = useState(1)
-
-  useEffect(() => {
-    let active = true
-    // Fetch products for this category from the API (already fast + resilient).
-    const url = `/api/products?category=${encodeURIComponent(categorySlug)}&sort=default`
-    fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error('Failed')
-        return r.json()
-      })
-      .then((d) => {
-        if (!active) return
-        setProducts(d.products || [])
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLoading(false)
-      })
-      .catch(() => {
-        if (!active) return
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setError(true)
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLoading(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [categorySlug])
 
   const sorted = useMemo(() => {
     const arr = [...products]
@@ -60,7 +30,7 @@ export function CategoryProducts({ categorySlug }: { categorySlug: string }) {
   return (
     <>
       <div className="category-toolbar">
-        <span>Total {loading ? '…' : total} Products</span>
+        <span>Total {total} Products</span>
         <label>
           Sort By:{' '}
           <select
@@ -70,7 +40,6 @@ export function CategoryProducts({ categorySlug }: { categorySlug: string }) {
               setSort(e.target.value as Sort)
               setPage(1)
             }}
-            disabled={loading}
           >
             <option value="default">Default</option>
             <option value="price-asc">Price low→high</option>
@@ -82,11 +51,7 @@ export function CategoryProducts({ categorySlug }: { categorySlug: string }) {
         </label>
       </div>
 
-      {loading ? (
-        <p className="muted">Loading products…</p>
-      ) : error ? (
-        <p className="muted">Could not load products right now. Please refresh the page.</p>
-      ) : paged.length === 0 ? (
+      {paged.length === 0 ? (
         <p className="muted">No products in this category yet.</p>
       ) : (
         <div className="product-grid">
@@ -96,9 +61,7 @@ export function CategoryProducts({ categorySlug }: { categorySlug: string }) {
         </div>
       )}
 
-      {!loading && (
-        <div className="product-footer-bar">Showing {paged.length} products</div>
-      )}
+      <div className="product-footer-bar">Showing {paged.length} products</div>
 
       {totalPages > 1 && (
         <div className="pager">
