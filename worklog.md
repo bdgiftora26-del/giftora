@@ -262,3 +262,48 @@ Stage Summary:
 - Admin panel now fully separated: secret URL + strong credentials + separate session
 - Customer accounts cannot access admin
 - Secret URL unguessable; /admin returns 404 to scanners
+
+---
+Task ID: bdgift-clone
+Agent: main
+Task: Rebuild frontend to replicate bdgift.com exactly (per screenshots)
+
+Analysis (6 screenshots + VLM):
+- Reference: bdgift.com — VP-ASP legacy site, Bootstrap 3
+- Color scheme: red #cc0000 (nav/headers/footer), blue #2b4cb8 (topbar), blue #4267b2 (buttons), orange #ff6600 (subnav), green #28a745 (CTA), dark red #990000 (footer)
+- Layout: blue topbar → white header (logo+phone+search) → red main nav (mega-menu) → hero → sidebar + product grid → dark red footer (4 cols)
+- Product cards: blue product name, black price, Add to/wishlist/Details action row
+- Cart: two-column (View Cart + Order Summary), green Checkout
+- Checkout: multi-step progress, form sections, green Continue
+
+Rebuild:
+- tokens.css: full bdgift.com color palette
+- TopBar (blue): currency, links, login/register, cart count, locale toggle
+- Header (white): logo + tagline 'Serving Since 2004' + WhatsApp phone +8801312597437 + socials + search
+- MainNav (red #cc0000): Home | All Categories | Flowers | Birthday | Cake | Anniversary | Food | Gift Baskets | FAQ | Your Order + hover mega-dropdowns + cart badge
+- HomeHero: 'Send Gifts to Bangladesh' banner with CTAs + trust features
+- HomeProductSections: red-header product grid sections (Flowers/Cakes/Food/Teddy/Offers)
+- ProductCard: bdgift style — blue name, black price, Add to/wishlist/Details row
+- Footer (dark red #990000): payment logos + 5 columns (Quick Links, Gift Categories, Send Gifts To, Popular Items, Contact) + socials + copyright
+- FloatingChat: green WhatsApp button bottom-right with popup
+- site config: Brand → BDGift.com, tagline 'Serving Since 2004', phone/WhatsApp +8801312597437
+
+Build fixes:
+- allSettledFallback typing: use any generics to avoid tuple friction
+- Remove generateStaticParams (build-time DB queries failed on Vercel Hobby)
+- force-dynamic for category/product pages (ISR at runtime, not build)
+- postinstall: prisma generate (auto-generate client on Vercel install)
+- buildCommand: next build (was 'prisma generate && next build')
+
+Live verification (VLM-confirmed):
+- ✅ Blue top bar, white header, RED main navigation
+- ✅ Hero 'Send Gifts to Bangladesh'
+- ✅ Product grid sections with red headers
+- ✅ Dark red footer with columns
+- Title: 'BDGift.com — Serving Since 2004'
+- All routes 200
+
+Remaining (for later):
+- Replace placeholder SVG images with real product photography
+- Verify pricing data display (some showing unusually high — may need seed check)
+- Category restructuring to bdgift.com grouping (Flowers/Birthday/Cake/Anniversary/Food)
