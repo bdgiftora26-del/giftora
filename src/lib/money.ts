@@ -21,7 +21,8 @@ export function convertFromBdt(bdtAmount: MoneyInput, rateFromBdt: MoneyInput): 
   const amt = toNumber(bdtAmount)
   const rate = toNumber(rateFromBdt)
   if (!rate || rate <= 0) return amt
-  return Math.round((amt / rate) * 100) / 100
+  // rateFromBdt = "1 BDT = X foreign currency", so foreign = bdt × rate
+  return Math.round(amt * rate * 100) / 100
 }
 
 export type CurrencyInfo = {
