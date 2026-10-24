@@ -349,3 +349,35 @@ via admin panel or provide own image URLs.
 Stage Summary:
 - 221 real products from bdgift.com now live on giftora-two.vercel.app
 - Product names, prices, categories all authentic from bdgift.com
+
+---
+Task ID: fix-pricing-categories
+Agent: main
+Task: Fix pricing display + rebuild categories to match bdgift.com
+
+CRITICAL FIX — currency conversion bug:
+- convertFromBdt was 'bdt / rate' (WRONG) → prices showed $785,604 instead of $65
+- Fixed to 'bdt * rate' (CORRECT: 1 BDT = 0.0091 USD, so USD = BDT × 0.0091)
+- Verified: ৳7149 → US $65.06 (bdgift.com original was $64.99)
+
+Category structure rebuild (bdgift.com matching):
+- New top-level: Flowers, Birthday, Cake, Anniversary, Food, Gift Baskets, Combo Gifts, Teddy Bear & Dolls, Chocolates, Home & Table Decoration, Greeting Cards, Live Plants (12 total)
+- 63 child categories (Roses in Bouquet, Mr Baker Cake, Fakruddin Biryani, etc)
+- 221 BDG products remapped to correct categories via createMany
+- 43 old top-level categories deactivated
+
+Category page rendering fix:
+- Was using client-side fetch (stuck on 'Loading products...')
+- Now server-side fetch with force-dynamic (products render immediately)
+- 48 products per page with correct USD prices
+
+Vercel build fix:
+- Removed generateMetadata (DB queries at build time → PrismaClientKnownRequestError)
+- Replaced with static metadata for category + product pages
+- DB queries only at runtime now
+
+Live verification (all passing):
+- Cake category: 48 products, prices US $34-60 (was $785,604!)
+- Flowers, Food, Anniversary categories: all 200
+- Sidebar: 12 bdgift.com categories (was 42 old ones)
+- 344 total products live
