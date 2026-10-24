@@ -2,21 +2,22 @@
 // Owner-editable parts mirror DB Setting rows at runtime.
 
 export const siteConfig = {
-  brand: 'BDGiftora.com',
-  brandShort: 'BDGiftora',
-  brandParts: { first: 'BD', second: 'Giftora', third: '.com' },
+  brand: 'BDGift.com',
+  brandShort: 'BDGift',
+  brandParts: { first: 'BD', second: 'Gift', third: '.com' },
   // Wordmark colours match the uploaded logo (BD=red, Giftora=purple, .com=red)
-  brandColors: { first: 'var(--c-brand-red)', second: 'var(--c-brand-purple)', third: 'var(--c-brand-red)' },
+  brandColors: { first: 'var(--c-brand-red)', second: 'var(--c-brand-red)', third: 'var(--c-brand-red)' },
   logoUrl: '/brand-logo.jpg',
-  tagline: 'Gift Delivery in Bangladesh',
-  taglineBn: 'বাংলাদেশে উপহার ডেলিভারি',
-  legalName: 'BDGiftora',
+  tagline: 'Serving Since 2004',
+  taglineBn: '২০০৪ সাল থেকে সেবা দিচ্ছি',
+  legalName: 'BDGift',
   abn: '00 000 000 000',
-  tradeLicense: 'Gift Delivery Service Trading License in Bangladesh: Dhaka-1234 (Sample — update with real license)',
-  // Contact info — placeholders until owner provides real details
-  email: 'support@bdgiftora.com',
-  phone: '+880 1700-000000',
-  address: 'Gulshan, Dhaka 1212, Bangladesh',
+  tradeLicense: 'Gift Delivery Service Trading License in Bangladesh (Sample — update with real license)',
+  // Contact info — bdgift.com numbers
+  email: 'info@bdgift.com',
+  phone: '+8801312597437',
+  whatsapp: '+8801312597437',
+  address: 'Dhaka, Bangladesh',
   defaultCitySlug: 'dhaka',
   orderPrefix: 'BG',
   defaultCurrency: 'USD',

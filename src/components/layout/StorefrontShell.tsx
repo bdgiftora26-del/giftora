@@ -2,14 +2,13 @@ import { db } from '@/lib/db'
 import { getSidebarCategories, type SidebarCategory } from '@/lib/catalog'
 import { TopBar } from '@/components/layout/TopBar'
 import { Header } from '@/components/layout/Header'
+import { MainNav } from '@/components/layout/MainNav'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Footer } from '@/components/layout/Footer'
 import { FloatingDiscount } from '@/components/layout/FloatingDiscount'
+import { FloatingChat } from '@/components/layout/FloatingChat'
 
-// NOTE: We intentionally do NOT read cookies() here. Reading cookies makes the
-// route dynamic (no ISR cache), which caused 5-10s loads + cold-start crashes.
-// Sidebar category names render in English; the rest of the UI (top bar, footer)
-// is client-side via useT() which reads the locale cookie in the browser.
+// NOTE: We intentionally do NOT read cookies() here (would make routes dynamic → no ISR cache).
 
 export async function StorefrontShell({
   children,
@@ -24,10 +23,11 @@ export async function StorefrontShell({
 
   return (
     <div className="app-root">
-      <div className="page-canvas">
-        <TopBar />
-        <Header />
-        <div className="content-column">
+      <TopBar />
+      <Header />
+      <MainNav />
+      <div className="page-wrapper">
+        <div className="page-canvas">
           {withSidebar ? (
             <div className="content-with-sidebar">
               <Sidebar categories={categories} activeSlug={activeSlug} />
@@ -40,6 +40,7 @@ export async function StorefrontShell({
         <Footer />
       </div>
       <FloatingDiscount />
+      <FloatingChat />
     </div>
   )
 }

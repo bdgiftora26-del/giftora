@@ -1,63 +1,66 @@
 import { db } from '@/lib/db'
 import { allSettledFallback } from '@/lib/db-resilient'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
-import { PromoMosaic } from '@/components/home/PromoMosaic'
-import { Testimonials, type TestimonialData } from '@/components/home/Testimonials'
-import { CategoryTiles, type TileData } from '@/components/home/CategoryTiles'
-import { AboutSection } from '@/components/home/AboutSection'
+import { HomeHero } from '@/components/home/HomeHero'
+import { HomeProductSections } from '@/components/home/HomeProductSections'
+import { HomeSidebar } from '@/components/home/HomeSidebar'
 import Link from 'next/link'
 
-// Home page is fully static + ISR. No per-request DB hit (resilient + fast).
-// Locale for client UI (promo/testimonials labels) is handled client-side via useT().
-// CMS 'home-about' + SEO links default to 'en' (acceptable; most traffic is EN).
 const LOCALE = 'en'
 
 export const revalidate = 600
 
 export default async function HomePage() {
-  const [testimonials, totalApproved, tiles, homeAbout, allCategories] = await allSettledFallback([
+  const [flowers, cakes, food, teddy, giftBaskets, allCategories] = await allSettledFallback([
     {
-      run: () =>
-        db.testimonial.findMany({
-          where: { approved: true },
-          orderBy: { createdAt: 'desc' },
-          take: 3,
-        }) as Promise<TestimonialData[]>,
-      fallback: [] as TestimonialData[],
+      run: () => db.product.findMany({
+        where: { isActive: true, categories: { some: { category: { slug: 'fresh-flower-and-roses' } } } },
+        include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
+        orderBy: { orderCount: 'desc' }, take: 6,
+      }),
+      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
     },
     {
-      run: () => db.testimonial.count({ where: { approved: true } }),
-      fallback: 0 as number,
+      run: () => db.product.findMany({
+        where: { isActive: true, isCake: true },
+        include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
+        orderBy: { orderCount: 'desc' }, take: 6,
+      }),
+      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
     },
     {
-      run: () =>
-        db.banner.findMany({
-          where: { placement: 'HOME_TILES', isActive: true },
-          orderBy: { sortOrder: 'asc' },
-        }),
-      fallback: [] as Awaited<ReturnType<typeof db.banner.findMany>>,
+      run: () => db.product.findMany({
+        where: { isActive: true, categories: { some: { category: { slug: 'food-court' } } } },
+        include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
+        orderBy: { orderCount: 'desc' }, take: 6,
+      }),
+      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
     },
     {
-      run: () => db.cmsPage.findUnique({ where: { slug_locale: { slug: 'home-about', locale: LOCALE } } }),
-      fallback: null as Awaited<ReturnType<typeof db.cmsPage.findUnique>>,
+      run: () => db.product.findMany({
+        where: { isActive: true, categories: { some: { category: { slug: 'teddy-bear-and-soft-toys' } } } },
+        include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
+        orderBy: { orderCount: 'desc' }, take: 6,
+      }),
+      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
     },
     {
-      run: () =>
-        db.category.findMany({
-          where: { parentId: null, isActive: true },
-          include: { i18n: true },
-          orderBy: { sortOrder: 'asc' },
-        }),
+      run: () => db.product.findMany({
+        where: { isActive: true, salePriceBdt: { not: null } },
+        include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
+        orderBy: { orderCount: 'desc' }, take: 6,
+      }),
+      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
+    },
+    {
+      run: () => db.category.findMany({
+        where: { parentId: null, isActive: true },
+        include: { i18n: true },
+        orderBy: { sortOrder: 'asc' },
+      }),
       fallback: [] as Awaited<ReturnType<typeof db.category.findMany>>,
     },
   ])
-
-  const tileData: TileData[] = tiles.map((b, i) => ({
-    id: b.id,
-    title: b.title,
-    href: b.link || '/catalogue',
-    imageIndex: i + 1,
-  }))
 
   const seoLinks = allCategories
     .map((c) => {
@@ -67,33 +70,31 @@ export default async function HomePage() {
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
-    <StorefrontShell>
-      <PromoMosaic />
-
-      <Testimonials testimonials={testimonials} totalApproved={totalApproved} />
-
-      <CategoryTiles tiles={tileData} />
-
-      <AboutSection bodyHtml={homeAbout?.body || ''} />
-
-      {/* Payment strip */}
-      <div className="payment-strip">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/placeholders/payments.svg" alt="Accepted payment methods" width={600} height={40} />
+    <StorefrontShell withSidebar>
+      <HomeHero />
+      <div className="home-body">
+        <div className="home-content">
+          <HomeProductSections
+            sections={[
+              { title: 'Latest Flowers', products: flowers },
+              { title: 'Popular Cakes', products: cakes },
+              { title: 'Food Items', products: food },
+              { title: 'Teddy Bears & Gifts', products: teddy },
+              { title: 'Special Offers', products: giftBaskets },
+            ]}
+          />
+          {seoLinks.length > 0 && (
+            <section className="seo-links">
+              <div className="section-header">All Categories</div>
+              <div className="seo-links-grid">
+                {seoLinks.map((l) => (
+                  <Link key={l.href} href={l.href}>{l.name}</Link>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       </div>
-
-      {/* SEO link list (home only) */}
-      {seoLinks.length > 0 && (
-        <section className="seo-links" aria-label="All categories">
-          <div className="seo-links-grid">
-            {seoLinks.map((l) => (
-              <Link key={l.href} href={l.href}>
-                {l.name}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
     </StorefrontShell>
   )
 }

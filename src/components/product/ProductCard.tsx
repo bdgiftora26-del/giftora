@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Price } from '@/components/Price'
 import { toNumber } from '@/lib/money'
+import { ShoppingCart, Heart } from 'lucide-react'
 
 export type ProductCardData = {
   id: number
@@ -19,7 +20,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
   return (
     <Link href={`/product/${p.slug}`} className="product-card">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={p.image} alt={p.name} className="product-card-img" width={120} height={120} />
+      <img src={p.image} alt={p.name} className="product-card-img" />
       <div className="product-card-name">{p.name}</div>
       <div className="product-card-price">
         <Price bdt={price} />
@@ -29,12 +30,15 @@ export function ProductCard({ p }: { p: ProductCardData }) {
           {p.orderCount} orders since {p.firstSoldYear}
         </div>
       )}
-      {p.shortDescription && (
-        <div className="product-card-desc">
-          {p.shortDescription.slice(0, 120)}
-          <span className="product-card-details">...Details</span>
-        </div>
-      )}
+      <div className="product-card-actions">
+        <span className="product-card-action">
+          <ShoppingCart size={12} /> Add to
+        </span>
+        <span className="product-card-action">
+          <Heart size={12} /> Save
+        </span>
+        <span className="product-card-details">Details</span>
+      </div>
     </Link>
   )
 }

@@ -1,46 +1,48 @@
-/* Design tokens — BDGiftora.com. Storefront palette from reference; brand purple from logo. */
+/* Design tokens — BDGift.com clone. Colors picked from reference screenshots. */
 :root {
-  /* Brand */
-  --c-green: #4a9c2e;
-  --c-green-dark: #3a7d22;
+  /* Brand — bdgift.com palette */
+  --c-brand-red: #cc0000;          /* main nav, section headers, footer */
+  --c-brand-red-dark: #990000;     /* footer dark red */
+  --c-brand-red-light: #e62e2b;    /* hover/gradient */
+  --c-brand-blue: #2b4cb8;         /* top utility bar */
+  --c-brand-blue-light: #4267b2;   /* Details button, links */
+  --c-brand-blue-link: #0066cc;    /* product name links */
+  --c-brand-orange: #ff6600;       /* sub-nav strip, accent */
+  --c-brand-green: #28a745;        /* Add to Cart, Checkout CTA */
+  --c-brand-green-dark: #1e7e34;
+
+  /* Aliases for storefront components */
+  --c-green: #28a745;
+  --c-green-dark: #1e7e34;
   --c-green-soft: #eaf5e4;
-  --c-red: #d6443a;
+  --c-red: #cc0000;
   --c-red-orange: #e0492f;
-  --c-orange: #f08a24;
+  --c-orange: #ff6600;
   --c-orange-dark: #d9730e;
-  --c-blue: #2b6fb0;
+  --c-blue: #2b4cb8;
+  --c-blue-link: #0066cc;
+  --c-blue-btn: #4267b2;
   --c-teal: #2fa6a0;
   --c-lime: #9ec93f;
   --c-pink: #f6c6d4;
   --c-pink-soft: #fbeef2;
 
-  /* Brand (BDGiftora logo colors) */
-  --c-brand-purple: #5b2a86;
-  --c-brand-purple-dark: #4a1f6e;
-  --c-brand-red: #d6443a;
-
   /* Neutrals */
-  --c-bg: #ececec;
+  --c-bg: #f9f9f9;
   --c-canvas: #f4f4f4;
   --c-content: #ffffff;
-  --c-line: #e2e2e2;
-  --c-line-strong: #cfcfcf;
+  --c-line: #e5e5e5;
+  --c-line-strong: #dddddd;
   --c-text: #333333;
   --c-text-soft: #666666;
-  --c-text-muted: #8a8a8a;
+  --c-text-muted: #999999;
 
-  /* Mosaic pastels */
-  --c-pastel-blue: #dceaf5;
-  --c-pastel-red: #f7dedc;
-  --c-pastel-teal: #dbefed;
-  --c-pastel-lime: #e7f0d4;
-  --c-pastel-pink: #f7e1ea;
-
-  /* Sizing — matches upoharbd.com (container 1170px) */
+  /* Sizing — matches bdgift.com bootstrap container */
   --content-width: 1170px;
-  --sidebar-width: 245px;
+  --sidebar-width: 220px;
   --topbar-h: 30px;
-  --header-h: 84px;
+  --header-h: 90px;
+  --nav-h: 42px;
 
   /* Fonts */
   --font-sans: Arial, Helvetica, 'Noto Sans Bengali', 'Hind Siliguri', sans-serif;

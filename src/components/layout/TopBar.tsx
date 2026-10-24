@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { useLocale, useT, useCart } from '@/components/providers'
-import { siteConfig } from '@/config/site'
 import { useEffect, useState } from 'react'
+import { Phone, Search, User, ShoppingCart } from 'lucide-react'
 
 export function TopBar() {
   const t = useT()
@@ -22,45 +22,37 @@ export function TopBar() {
     <div className="topbar">
       <div className="topbar-inner">
         <div className="topbar-left">
-          {siteConfig.nav.top.map((item) => (
-            <Link key={item.href} href={item.href} className="topbar-link">
-              {t(`Nav.${item.label.replace(/[^A-Za-z]/g, '')}`) !== `Nav.${item.label.replace(/[^A-Za-z]/g, '')}`
-                ? t(`Nav.${labelKey(item.label)}`)
-                : item.label}
-            </Link>
-          ))}
+          <span className="topbar-currency">
+            <span className="flag-us" aria-hidden="true" /> USD
+          </span>
+          <span className="topbar-sep">|</span>
+          <Link href="/" className="topbar-link">{t('Nav.Home')}</Link>
+          <Link href="/catalogue" className="topbar-link">All Categories</Link>
+          <Link href="/how-to-order-gift" className="topbar-link">How to Order</Link>
+          <Link href="/track-order" className="topbar-link">Track Order</Link>
+          <Link href="/faq" className="topbar-link">FAQ</Link>
         </div>
         <div className="topbar-right">
-          <Link href="/login" className="topbar-link">{t('Nav.Login')}</Link>
-          <Link href="/register" className="topbar-link">{t('Nav.Register')}</Link>
-          <Link href="/contact-us" className="topbar-link">{t('Nav.ContactUs')}</Link>
+          <Link href="/login" className="topbar-link">Login</Link>
+          <span className="topbar-sep">|</span>
+          <Link href="/register" className="topbar-link">Register</Link>
+          <span className="topbar-sep">|</span>
+          <Link href="/account" className="topbar-link">My Account</Link>
+          <span className="topbar-sep">|</span>
+          <Link href="/cart" className="topbar-link">
+            <ShoppingCart size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /> Cart ({count})
+          </Link>
+          <span className="topbar-sep">|</span>
           <button
             type="button"
             className="topbar-locale"
             onClick={() => setLocale(locale === 'en' ? 'bn' : 'en')}
             aria-label="Toggle language"
           >
-            <span className="flag-bd" aria-hidden="true" />
             {locale === 'en' ? 'বাংলা' : 'English'}
           </button>
-          <Link href="/cart" className="topbar-cart">
-            {t('Nav.ShoppingCart')}
-            {count > 0 && <span className="topbar-cart-count">({count})</span>}
-          </Link>
         </div>
       </div>
     </div>
   )
-}
-
-function labelKey(label: string): string {
-  const map: Record<string, string> = {
-    Home: 'Home',
-    'View Catalog': 'ViewCatalog',
-    'How to Order': 'HowToOrder',
-    'How to Pay': 'HowToPay',
-    FAQ: 'FAQ',
-    'Track Order': 'TrackOrder',
-  }
-  return map[label] || label.replace(/\s/g, '')
 }
