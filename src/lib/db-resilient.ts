@@ -45,15 +45,16 @@ export async function withRetry<T>(op: () => Promise<T>): Promise<T> {
 
 // Run several DB operations in parallel, tolerating individual failures.
 // Returns results with `ok` flag; failed ones get the fallback value.
-export async function allSettledFallback<T>(
-  ops: Array<{ run: () => Promise<T>; fallback: T }>,
+// Uses `any` for return to avoid tuple-typing friction across heterogeneous ops.
+export async function allSettledFallback<T = any>(
+  ops: Array<{ run: () => Promise<any>; fallback: any }>,
 ): Promise<T[]> {
   const settled = await Promise.allSettled(
     ops.map(async (op) => withRetry(op.run)),
   )
   return settled.map((res, i) =>
     res.status === 'fulfilled' ? res.value : ops[i].fallback,
-  )
+  ) as T[]
 }
 
 export { db }

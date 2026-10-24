@@ -3,7 +3,6 @@ import { allSettledFallback } from '@/lib/db-resilient'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
 import { HomeHero } from '@/components/home/HomeHero'
 import { HomeProductSections } from '@/components/home/HomeProductSections'
-import { HomeSidebar } from '@/components/home/HomeSidebar'
 import Link from 'next/link'
 
 const LOCALE = 'en'
@@ -11,14 +10,14 @@ const LOCALE = 'en'
 export const revalidate = 600
 
 export default async function HomePage() {
-  const [flowers, cakes, food, teddy, giftBaskets, allCategories] = await allSettledFallback([
+  const [flowers, cakes, food, teddy, giftBaskets, allCategories] = (await allSettledFallback([
     {
       run: () => db.product.findMany({
         where: { isActive: true, categories: { some: { category: { slug: 'fresh-flower-and-roses' } } } },
         include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
         orderBy: { orderCount: 'desc' }, take: 6,
       }),
-      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
+      fallback: [] as any,
     },
     {
       run: () => db.product.findMany({
@@ -26,7 +25,7 @@ export default async function HomePage() {
         include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
         orderBy: { orderCount: 'desc' }, take: 6,
       }),
-      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
+      fallback: [] as any,
     },
     {
       run: () => db.product.findMany({
@@ -34,7 +33,7 @@ export default async function HomePage() {
         include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
         orderBy: { orderCount: 'desc' }, take: 6,
       }),
-      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
+      fallback: [] as any,
     },
     {
       run: () => db.product.findMany({
@@ -42,7 +41,7 @@ export default async function HomePage() {
         include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
         orderBy: { orderCount: 'desc' }, take: 6,
       }),
-      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
+      fallback: [] as any,
     },
     {
       run: () => db.product.findMany({
@@ -50,7 +49,7 @@ export default async function HomePage() {
         include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
         orderBy: { orderCount: 'desc' }, take: 6,
       }),
-      fallback: [] as Awaited<ReturnType<typeof db.product.findMany>>,
+      fallback: [] as any,
     },
     {
       run: () => db.category.findMany({
@@ -58,9 +57,9 @@ export default async function HomePage() {
         include: { i18n: true },
         orderBy: { sortOrder: 'asc' },
       }),
-      fallback: [] as Awaited<ReturnType<typeof db.category.findMany>>,
+      fallback: [] as any,
     },
-  ])
+  ])) as any
 
   const seoLinks = allCategories
     .map((c) => {

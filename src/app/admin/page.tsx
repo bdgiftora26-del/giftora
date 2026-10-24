@@ -13,19 +13,19 @@ export default async function AdminDashboard() {
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const [ordersToday, totalRevenue, pendingPayment, awaitingPayment, lowStock, totalProducts, totalOrders, recentOrders] = await allSettledFallback([
-    { run: () => db.order.count({ where: { createdAt: { gte: today } } }), fallback: 0 as number },
-    { run: () => db.order.aggregate({ where: { status: 'PAID' }, _sum: { totalBdt: true } }), fallback: { _sum: { totalBdt: 0 } } },
-    { run: () => db.order.count({ where: { status: 'PROCESSING' } }), fallback: 0 as number },
-    { run: () => db.order.count({ where: { status: 'AWAITING_PAYMENT' } }), fallback: 0 as number },
-    { run: () => db.product.count({ where: { stockMode: 'TRACKED', stockQty: { lt: 5 } } }), fallback: 0 as number },
-    { run: () => db.product.count(), fallback: 0 as number },
-    { run: () => db.order.count(), fallback: 0 as number },
+  const [ordersToday, totalRevenue, pendingPayment, awaitingPayment, lowStock, totalProducts, totalOrders, recentOrders] = (await allSettledFallback([
+    { run: () => db.order.count({ where: { createdAt: { gte: today } } }), fallback: 0 as any },
+    { run: () => db.order.aggregate({ where: { status: 'PAID' }, _sum: { totalBdt: true } }), fallback: { _sum: { totalBdt: 0 } } as any },
+    { run: () => db.order.count({ where: { status: 'PROCESSING' } }), fallback: 0 as any },
+    { run: () => db.order.count({ where: { status: 'AWAITING_PAYMENT' } }), fallback: 0 as any },
+    { run: () => db.product.count({ where: { stockMode: 'TRACKED', stockQty: { lt: 5 } } }), fallback: 0 as any },
+    { run: () => db.product.count(), fallback: 0 as any },
+    { run: () => db.order.count(), fallback: 0 as any },
     {
       run: () => db.order.findMany({ orderBy: { createdAt: 'desc' }, take: 8, include: { delivery: { include: { city: true } } } }),
-      fallback: [] as Awaited<ReturnType<typeof db.order.findMany>>,
+      fallback: [] as any,
     },
-  ])
+  ])) as any
 
   return (
     <StorefrontShell>
