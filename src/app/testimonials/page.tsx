@@ -3,7 +3,7 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { TestimonialForm } from '@/components/TestimonialForm'
 import { db } from '@/lib/db'
 
-export const revalidate = 300
+export const dynamic = "force-dynamic"
 
 export default async function TestimonialsPage() {
   const testimonials = await db.testimonial.findMany({

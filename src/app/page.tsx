@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 const LOCALE = 'en'
 
-export const revalidate = 600
+export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
   const [flowers, cakes, food, teddy, giftBaskets, allCategories] = (await allSettledFallback([

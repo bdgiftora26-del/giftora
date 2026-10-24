@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { db } from '@/lib/db'
 import { ProductGridClient } from '@/components/product/ProductGridClient'
 
-export const revalidate = 300
+export const dynamic = "force-dynamic"
 
 export default async function CataloguePage() {
   const categories = await db.category.findMany({

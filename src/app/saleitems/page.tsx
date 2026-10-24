@@ -4,7 +4,7 @@ import { ProductCard, type ProductCardData } from '@/components/product/ProductC
 import { db } from '@/lib/db'
 import { toNumber } from '@/lib/money'
 
-export const revalidate = 300
+export const dynamic = "force-dynamic"
 
 export default async function SaleItemsPage() {
   const products = await db.product.findMany({
