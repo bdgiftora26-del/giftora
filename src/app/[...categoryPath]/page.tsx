@@ -5,16 +5,11 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { CategoryProducts } from '@/components/product/CategoryProducts'
 import type { Metadata } from 'next'
 
-// Static shell — page renders instantly (no DB hit at request time for the shell).
-// Products are fetched client-side from the API (resilient + fast).
-export const dynamic = 'force-static'
-export const dynamicParams = true
+// Dynamic rendering — avoids build-time DB queries (which fail on Vercel Hobby).
+// ISR cache still works via revalidate.
+export const revalidate = 600
+export const dynamic = 'force-dynamic'
 const LOCALE = 'en'
-
-// Pre-render top-level category + CMS slugs so they're served from CDN instantly.
-export async function generateStaticParams() {
-  return []
-}
 
 export async function generateMetadata({
   params,

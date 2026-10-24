@@ -9,8 +9,7 @@ import { toNumber } from '@/lib/money'
 import type { Metadata } from 'next'
 
 export const revalidate = 600
-export const dynamicParams = true
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 const LOCALE = 'en'
 
 
