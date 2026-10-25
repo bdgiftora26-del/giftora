@@ -40,9 +40,9 @@
   /* Sizing — matches bdgift.com bootstrap container */
   --content-width: 1170px;
   --sidebar-width: 220px;
-  --topbar-h: 30px;
-  --header-h: 90px;
-  --nav-h: 42px;
+  --topbar-h: 34px;
+  --header-h: 100px;
+  --nav-h: 46px;
 
   /* Fonts */
   --font-sans: Arial, Helvetica, 'Noto Sans Bengali', 'Hind Siliguri', sans-serif;

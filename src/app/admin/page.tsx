@@ -49,6 +49,7 @@ export default async function AdminDashboard() {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
           <Link href="/admin/products" className="btn-green">Manage Products</Link>
           <Link href="/admin/orders" className="btn-green">Manage Orders</Link>
+          <Link href="/admin/sliders" className="btn-green">Home Sliders</Link>
           <Link href="/admin/categories" className="btn-green">Categories</Link>
           <Link href="/admin/banners" className="btn-green">Banners</Link>
         </div>
