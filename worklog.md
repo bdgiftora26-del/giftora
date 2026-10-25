@@ -381,3 +381,37 @@ Live verification (all passing):
 - Flowers, Food, Anniversary categories: all 200
 - Sidebar: 12 bdgift.com categories (was 42 old ones)
 - 344 total products live
+
+---
+Task ID: header-slider-admin
+Agent: main
+Task: Header/footer polish + hero slider + full admin panel
+
+1. Header/Footer (bdgift.com exact match):
+- Topbar font 11→13px, height 30→34px
+- Header: logo 70→80px, phone 13→16px, search 32→38px, border 1→3px red
+- Search: red border + red button (was blue border + blue button)
+- Nav: font 12.5→14px, padding 11→13px, weight 600→700
+- Better spacing throughout
+
+2. Hero Slider (admin-managed):
+- HomeHero fetches HOME_SLIDER banners from DB (server-side)
+- HomeSlider client component: auto-rotate 4s, dots, prev/next arrows
+- 3 default slider banners seeded (Same Day Delivery / 5% OFF / Free Chittagong)
+- /admin/sliders page: add/delete/toggle slides
+- API: /api/admin/banners (GET/POST), /api/admin/banners/[id] (PATCH/DELETE)
+
+3. Admin Panel (full CRUD):
+- Products: /admin/products — list, search, add new (form), delete, toggle active
+- API: /api/admin/products (GET/POST), /api/admin/products/[id] (PATCH/DELETE)
+- Slider management: /admin/sliders
+- Orders: /admin/orders — status changes (existing, verified working)
+- Categories: /admin/categories — tree view (existing)
+- Dashboard: links to all modules
+
+Live verification:
+- Home: 200 (slider renders 3 slides)
+- Admin dashboard: 200 (with session)
+- Admin products: 200 (full CRUD)
+- Admin sliders: 200 (add/delete slides)
+- Admin orders: 200 (status management)
