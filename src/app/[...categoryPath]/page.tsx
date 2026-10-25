@@ -13,7 +13,7 @@ const LOCALE = 'en'
 
 // Static metadata (no DB query at build time — avoids Vercel build failures)
 export const metadata: Metadata = {
-  title: 'BDGift.com — Send Gifts to Bangladesh',
+  title: 'BDGiftora.com — Send Gifts to Bangladesh',
   description: 'Send gifts, cakes, flowers, and more to Bangladesh. Serving since 2004.',
 }
 

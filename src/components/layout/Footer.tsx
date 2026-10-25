@@ -81,10 +81,10 @@ export function Footer() {
           <div className="footer-col footer-contact">
             <h4 className="footer-col-title">Contact Us</h4>
             <p className="footer-contact-line">{siteConfig.email}</p>
-            <p className="footer-contact-line">+880 1312 597437</p>
+            <p className="footer-contact-line">+880 1700-000000</p>
             <div className="footer-socials">
               <a href={siteConfig.social.facebook} aria-label="Facebook" className="footer-social"><Facebook size={14} /></a>
-              <a href="https://wa.me/8801312597437" aria-label="WhatsApp" className="footer-social"><MessageCircle size={14} /></a>
+              <a href="https://wa.me/8801700000000" aria-label="WhatsApp" className="footer-social"><MessageCircle size={14} /></a>
               <a href={siteConfig.social.twitter} aria-label="Twitter" className="footer-social"><Twitter size={14} /></a>
               <a href={siteConfig.social.youtube} aria-label="YouTube" className="footer-social"><Youtube size={14} /></a>
               <a href={siteConfig.social.instagram} aria-label="Instagram" className="footer-social"><Instagram size={14} /></a>

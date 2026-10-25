@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { requireAdminSession } from '@/lib/admin-auth'
 import { db } from '@/lib/db'
-import { StorefrontShell } from '@/components/layout/StorefrontShell'
+import { AdminShell } from '@/components/admin/AdminShell'
 import { CategoryIcon } from '@/components/CategoryIcon'
 
 export const dynamic = 'force-dynamic'
@@ -16,7 +16,7 @@ export default async function AdminCategoriesPage() {
   })
 
   return (
-    <StorefrontShell>
+    <AdminShell>
       <div style={{ padding: '12px 16px' }}>
         <h1 className="category-h1">Categories</h1>
         <p className="checkout-helper">
@@ -54,6 +54,6 @@ export default async function AdminCategoriesPage() {
           Note: Full drag-and-drop editing is available in the complete admin build. This view shows the current tree.
         </p>
       </div>
-    </StorefrontShell>
+    </AdminShell>
   )
 }

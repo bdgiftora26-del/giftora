@@ -25,7 +25,7 @@ export function FloatingChat() {
           </div>
           <div className="floating-chat-body">
             <p>Have a question about your order or a gift? Chat with us on WhatsApp.</p>
-            <a href="https://wa.me/8801312597437" className="floating-chat-wa">
+            <a href="https://wa.me/8801700000000" className="floating-chat-wa">
               <MessageCircle size={14} /> Chat on WhatsApp
             </a>
           </div>

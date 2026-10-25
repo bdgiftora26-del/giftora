@@ -3,7 +3,7 @@ import { requireAdminSession } from '@/lib/admin-auth'
 import { db } from '@/lib/db'
 import { allSettledFallback } from '@/lib/db-resilient'
 import { toNumber } from '@/lib/money'
-import { StorefrontShell } from '@/components/layout/StorefrontShell'
+import { AdminShell } from '@/components/admin/AdminShell'
 import { AdminLogoutButton } from '@/components/admin/AdminLogoutButton'
 
 export const dynamic = 'force-dynamic'
@@ -28,7 +28,7 @@ export default async function AdminDashboard() {
   ])) as any
 
   return (
-    <StorefrontShell>
+    <AdminShell>
       <div style={{ padding: '12px 16px' }}>
         <h1 className="category-h1">Admin Dashboard</h1>
         <p className="checkout-helper">
@@ -80,7 +80,7 @@ export default async function AdminDashboard() {
           </tbody>
         </table>
       </div>
-    </StorefrontShell>
+    </AdminShell>
   )
 }
 
