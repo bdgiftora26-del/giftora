@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Trash2, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
@@ -16,44 +16,40 @@ type Product = {
   salePriceBdt: number | null
   isActive: boolean
   image: string
-  categories: string[]
 }
 
 export function AdminProductsManager() {
   const [products, setProducts] = useState<Product[]>([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState('')
-  const [showAdd, setShowAdd] = useState(false)
   const [page, setPage] = useState(1)
+  const [showAdd, setShowAdd] = useState(false)
 
-  useEffect(() => { fetchProducts() }, [])
-
-  async function fetchProducts() {
+  const fetchPage = useCallback(async (pageNum: number, search: string) => {
     setLoading(true)
-    const res = await fetch('/api/admin/products')
+    const params = new URLSearchParams({ page: String(pageNum) })
+    if (search) params.set('q', search)
+    const res = await fetch(`/api/admin/products?${params}`)
     const data = await res.json()
     setProducts(data.products || [])
+    setTotal(data.total || 0)
+    setTotalPages(data.totalPages || 1)
     setLoading(false)
-  }
+  }, [])
 
-  const filtered = useMemo(() =>
-    products.filter((p) =>
-      p.name.toLowerCase().includes(q.toLowerCase()) || p.sku.toLowerCase().includes(q.toLowerCase())
-    ), [products, q])
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
-  const safePage = Math.min(page, totalPages)
-  const paged = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE)
-
-  // Reset to page 1 when search changes
-  useEffect(() => { setPage(1) }, [q])
+  useEffect(() => {
+    const timer = setTimeout(() => fetchPage(page, q), 300)
+    return () => clearTimeout(timer)
+  }, [page, q, fetchPage])
 
   async function deleteProduct(id: number, name: string) {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
     const res = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' })
     if (res.ok) {
       toast.success('Product deleted')
-      setProducts(products.filter((p) => p.id !== id))
+      fetchPage(page, q)
     } else { toast.error('Failed to delete') }
   }
 
@@ -62,13 +58,15 @@ export function AdminProductsManager() {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isActive: !current }),
     })
-    if (res.ok) setProducts(products.map((p) => (p.id === id ? { ...p, isActive: !current } : p)))
+    if (res.ok) {
+      setProducts(products.map((p) => (p.id === id ? { ...p, isActive: !current } : p)))
+    }
   }
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h2 className="admin-page-title">Products ({products.length})</h2>
+        <h2 className="admin-page-title">Products ({total})</h2>
         <button type="button" className="admin-btn admin-btn-primary" onClick={() => setShowAdd(!showAdd)}>
           <Plus size={14} /> Add Product
         </button>
@@ -76,15 +74,21 @@ export function AdminProductsManager() {
 
       <Link href="/admin" className="admin-back-link">← Back to Dashboard</Link>
 
-      {showAdd && <AddProductForm onAdded={() => { fetchProducts(); setShowAdd(false) }} />}
+      {showAdd && <AddProductForm onAdded={() => { fetchPage(page, q); setShowAdd(false) }} />}
 
       <div className="admin-search">
         <Search size={14} style={{ position: 'absolute', left: 12, top: 12, color: '#999' }} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or SKU..." />
+        <input
+          value={q}
+          onChange={(e) => { setQ(e.target.value); setPage(1) }}
+          placeholder="Search by name or SKU..."
+        />
       </div>
 
       {loading ? (
-        <p className="muted">Loading...</p>
+        <p style={{ textAlign: 'center', padding: 40, color: '#999' }}>Loading products...</p>
+      ) : products.length === 0 ? (
+        <p style={{ textAlign: 'center', padding: 40, color: '#999' }}>No products found.</p>
       ) : (
         <>
           <table className="admin-table">
@@ -100,7 +104,7 @@ export function AdminProductsManager() {
               </tr>
             </thead>
             <tbody>
-              {paged.map((p) => (
+              {products.map((p) => (
                 <tr key={p.id}>
                   <td>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -108,7 +112,6 @@ export function AdminProductsManager() {
                   </td>
                   <td>
                     <Link href={`/product/${p.slug}`} target="_blank" style={{ color: '#4f46e5' }}>{p.name}</Link>
-                    <div style={{ fontSize: 10, color: '#999' }}>{p.categories.join(', ')}</div>
                   </td>
                   <td style={{ fontSize: 11 }}>{p.sku}</td>
                   <td>৳{p.priceBdt}</td>
@@ -134,15 +137,15 @@ export function AdminProductsManager() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 16 }}>
-              <button type="button" className="admin-btn admin-btn-outline" disabled={safePage === 1}
-                onClick={() => setPage(safePage - 1)} style={{ padding: '4px 10px' }}>
+              <button type="button" className="admin-btn admin-btn-outline" disabled={page === 1 || loading}
+                onClick={() => setPage(page - 1)} style={{ padding: '4px 10px' }}>
                 <ChevronLeft size={14} /> Prev
               </button>
               <span style={{ fontSize: 13, color: '#555' }}>
-                Page {safePage} of {totalPages} ({filtered.length} total)
+                Page {page} of {totalPages} ({total} total)
               </span>
-              <button type="button" className="admin-btn admin-btn-outline" disabled={safePage === totalPages}
-                onClick={() => setPage(safePage + 1)} style={{ padding: '4px 10px' }}>
+              <button type="button" className="admin-btn admin-btn-outline" disabled={page === totalPages || loading}
+                onClick={() => setPage(page + 1)} style={{ padding: '4px 10px' }}>
                 Next <ChevronRight size={14} />
               </button>
             </div>

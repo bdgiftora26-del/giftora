@@ -4,13 +4,14 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { toNumber } from '@/lib/money'
 
 // Cache sidebar data for 60s to avoid repeated DB hits
-let cache: { ts: number; data: any } | null = null
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sidebarCache: { ts: number; data: any } = { ts: 0, data: null }
 const CACHE_TTL = 60_000
 
 // Server component — fetches all sidebar data for the home page (cached)
 export async function HomeSidebar() {
-  if (cache && Date.now() - cache.ts < CACHE_TTL) {
-    return <Sidebar categories={cache.data.categories} widgets={cache.data.widgets} />
+  if (sidebarCache.data && Date.now() - sidebarCache.ts < CACHE_TTL) {
+    return <Sidebar categories={sidebarCache.data.categories} widgets={sidebarCache.data.widgets} />
   }
 
   const categories: SidebarCategory[] = await getSidebarCategories('en').catch(() => [])
@@ -68,7 +69,8 @@ export async function HomeSidebar() {
     ],
   }
 
-  cache = { ts: Date.now(), data: { categories, widgets } }
+  sidebarCache.ts = Date.now()
+  sidebarCache.data = { categories, widgets }
 
   return <Sidebar categories={categories} widgets={widgets} />
 }

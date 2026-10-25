@@ -4,20 +4,44 @@ import { getAdminSession } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
 
-// List all products (admin)
-export async function GET() {
+// List products with server-side pagination (only fetch 15 at a time)
+export async function GET(req: Request) {
   const isAdmin = await getAdminSession()
   if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const products = await db.product.findMany({
-    include: {
-      i18n: { where: { locale: 'en' } },
-      images: { orderBy: { sortOrder: 'asc' }, take: 1 },
-      categories: { include: { category: { include: { i18n: { where: { locale: 'en' } } } } } },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 200,
-  })
+  const { searchParams } = new URL(req.url)
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1)
+  const q = searchParams.get('q') || ''
+  const PER_PAGE = 15
+
+  // Build where clause for search
+  const where = q
+    ? {
+        isActive: true,
+        OR: [
+          { sku: { contains: q, mode: 'insensitive' } },
+          { slug: { contains: q, mode: 'insensitive' } },
+          { i18n: { some: { name: { contains: q, mode: 'insensitive' } } } },
+        ],
+      }
+    : { isActive: true }
+
+  // Fetch only the current page + total count (2 fast queries)
+  const [total, products] = await Promise.all([
+    db.product.count({ where }),
+    db.product.findMany({
+      where,
+      select: {
+        id: true, sku: true, slug: true, priceBdt: true, salePriceBdt: true,
+        isActive: true, isCake: true,
+        i18n: { where: { locale: 'en' }, select: { name: true } },
+        images: { take: 1, orderBy: { sortOrder: 'asc' }, select: { url: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * PER_PAGE,
+      take: PER_PAGE,
+    }),
+  ])
 
   return NextResponse.json({
     products: products.map((p) => ({
@@ -29,11 +53,11 @@ export async function GET() {
       salePriceBdt: p.salePriceBdt ? Number(p.salePriceBdt) : null,
       isActive: p.isActive,
       isCake: p.isCake,
-      stockMode: p.stockMode,
-      stockQty: p.stockQty,
       image: p.images[0]?.url || '/placeholders/products/generic-01.svg',
-      categories: p.categories.map((c) => c.category.i18n[0]?.name || c.category.slug),
     })),
+    total,
+    page,
+    totalPages: Math.max(1, Math.ceil(total / PER_PAGE)),
   })
 }
 
@@ -50,7 +74,6 @@ export async function POST(req: Request) {
   }
 
   const slug = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').slice(0, 80)
-  // Ensure unique slug
   let uniqueSlug = slug
   let i = 1
   while (await db.product.findUnique({ where: { slug: uniqueSlug } })) {

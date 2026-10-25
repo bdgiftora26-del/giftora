@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
@@ -20,15 +20,15 @@ export function SliderManager() {
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
 
-  useEffect(() => { fetchBanners() }, [])
-
-  async function fetchBanners() {
+  const fetchBanners = useCallback(async () => {
     setLoading(true)
     const res = await fetch('/api/admin/banners?placement=HOME_SLIDER')
     const data = await res.json()
     setBanners(data.banners || [])
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => { fetchBanners() }, [fetchBanners])
 
   async function deleteBanner(id: number) {
     if (!confirm('Delete this slider?')) return

@@ -29,7 +29,11 @@ export default async function AdminOrdersPage({
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * PER_PAGE,
       take: PER_PAGE,
-      include: { delivery: { include: { city: true } }, items: true },
+      select: {
+        id: true, orderNo: true, status: true, totalBdt: true, createdAt: true,
+        invFirstName: true, invLastName: true, invEmail: true,
+        delivery: { select: { recipientName: true, recipientPhone: true, city: { select: { name: true } } } },
+      },
     }),
   ])
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
