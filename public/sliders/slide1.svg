@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="400" viewBox="0 0 1440 400">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#cc0000"/>
+      <stop offset="100%" stop-color="#990000"/>
+    </linearGradient>
+  </defs>
+  <rect width="1440" height="400" fill="url(#bg1)"/>
+  <circle cx="1100" cy="200" r="150" fill="#fff" opacity="0.1"/>
+  <circle cx="1200" cy="150" r="80" fill="#fff" opacity="0.15"/>
+  <text x="80" y="160" font-family="Arial,sans-serif" font-size="42" font-weight="bold" fill="#fff">Same Day Delivery in Dhaka</text>
+  <text x="80" y="210" font-family="Arial,sans-serif" font-size="24" fill="#ffcccc">Order before 2 PM for same day delivery</text>
+  <text x="80" y="260" font-family="Arial,sans-serif" font-size="20" fill="#fff" opacity="0.9">Fresh Flowers • Cakes • Gifts • Food</text>
+  <rect x="80" y="290" width="180" height="44" rx="4" fill="#fff"/>
+  <text x="170" y="318" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#cc0000" text-anchor="middle">SHOP NOW →</text>
+</svg>

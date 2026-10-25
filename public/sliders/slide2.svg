@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="400" viewBox="0 0 1440 400">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2b4cb8"/>
+      <stop offset="100%" stop-color="#1a3a8e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1440" height="400" fill="url(#bg2)"/>
+  <circle cx="1150" cy="200" r="140" fill="#fff" opacity="0.1"/>
+  <text x="80" y="160" font-family="Arial,sans-serif" font-size="42" font-weight="bold" fill="#fff">5% OFF All Gift Packages</text>
+  <text x="80" y="210" font-family="Arial,sans-serif" font-size="24" fill="#ccd6ff">Use discount code: GIFT at checkout</text>
+  <text x="80" y="260" font-family="Arial,sans-serif" font-size="20" fill="#fff" opacity="0.9">Valid on all gift packages • Limited time</text>
+  <rect x="80" y="290" width="200" height="44" rx="4" fill="#ffcc00"/>
+  <text x="180" y="318" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#2b4cb8" text-anchor="middle">ORDER NOW →</text>
+</svg>
