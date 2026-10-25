@@ -3,6 +3,7 @@ import { allSettledFallback } from '@/lib/db-resilient'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
 import { HomeHero } from '@/components/home/HomeHero'
 import { HomeProductSections } from '@/components/home/HomeProductSections'
+import { HomeSidebar } from '@/components/home/HomeSidebar'
 import Link from 'next/link'
 
 const LOCALE = 'en'
@@ -56,10 +57,11 @@ export default async function HomePage() {
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
-    <StorefrontShell withSidebar>
+    <StorefrontShell>
       <HomeHero />
-      <div className="home-body">
-        <div className="home-content">
+      <div className="content-with-sidebar">
+        <HomeSidebar />
+        <main className="content-main">
           <HomeProductSections
             sections={[
               { title: 'Fresh Flowers', products: flowers },
@@ -79,7 +81,7 @@ export default async function HomePage() {
               </div>
             </section>
           )}
-        </div>
+        </main>
       </div>
     </StorefrontShell>
   )
