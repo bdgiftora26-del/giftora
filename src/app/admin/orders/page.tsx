@@ -12,19 +12,27 @@ const STATUSES = ['AWAITING_PAYMENT', 'PAID', 'PROCESSING', 'OUT_FOR_DELIVERY', 
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>
+  searchParams: Promise<{ status?: string; page?: string }>
 }) {
   await requireAdminSession()
 
   const sp = await searchParams
   const statusFilter = sp.status && (STATUSES as readonly string[]).includes(sp.status) ? sp.status : undefined
+  const page = Math.max(1, parseInt(sp.page || '1', 10) || 1)
+  const PER_PAGE = 15
 
-  const orders = await db.order.findMany({
-    where: statusFilter ? { status: statusFilter as (typeof STATUSES)[number] } : undefined,
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-    include: { delivery: { include: { city: true } }, items: true, events: { orderBy: { createdAt: 'asc' } } },
-  })
+  const where = statusFilter ? { status: statusFilter as (typeof STATUSES)[number] } : undefined
+  const [total, orders] = await Promise.all([
+    db.order.count({ where }),
+    db.order.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * PER_PAGE,
+      take: PER_PAGE,
+      include: { delivery: { include: { city: true } }, items: true },
+    }),
+  ])
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
 
   return (
     <AdminShell>
@@ -75,6 +83,23 @@ export default async function AdminOrdersPage({
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 16 }}>
+              {page > 1 && (
+                <Link href={`/admin/orders?${statusFilter ? 'status=' + statusFilter + '&' : ''}page=${page - 1}`} className="admin-btn admin-btn-outline" style={{ padding: '4px 12px', textDecoration: 'none' }}>
+                  ← Prev
+                </Link>
+              )}
+              <span style={{ fontSize: 13, color: '#555' }}>Page {page} of {totalPages} ({total} orders)</span>
+              {page < totalPages && (
+                <Link href={`/admin/orders?${statusFilter ? 'status=' + statusFilter + '&' : ''}page=${page + 1}`} className="admin-btn admin-btn-outline" style={{ padding: '4px 12px', textDecoration: 'none' }}>
+                  Next →
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </AdminShell>
