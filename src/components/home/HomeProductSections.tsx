@@ -1,17 +1,16 @@
-import Link from 'next/link'
 import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
 import { toNumber } from '@/lib/money'
 
 export function HomeProductSections({
   sections,
 }: {
-  sections: { title: string; products: Awaited<ReturnType<typeof import('@/lib/db').db.product.findMany>> }[]
+  sections: { title: string; cols?: number; products: Awaited<ReturnType<typeof import('@/lib/db').db.product.findMany>> }[]
 }) {
   return (
     <>
       {sections.map((section) => {
         if (!section.products || section.products.length === 0) return null
-        const cards: ProductCardData[] = section.products.map((p) => ({
+        const cards: ProductCardData[] = section.products.map((p: any) => ({
           id: p.id,
           slug: p.slug,
           name: p.i18n[0]?.name || p.slug,
@@ -22,8 +21,9 @@ export function HomeProductSections({
           firstSoldYear: p.firstSoldYear,
           shortDescription: p.i18n[0]?.shortDescription,
         }))
+        const colClass = section.cols === 4 ? 'home-section home-section-4' : 'home-section home-section-3'
         return (
-          <section key={section.title} className="home-section">
+          <section key={section.title} className={colClass}>
             <div className="section-header">{section.title}</div>
             <div className="product-grid">
               {cards.map((p) => (

@@ -1036,3 +1036,82 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   width: 100%;
   height: 30px;
 }
+
+/* Home content sections (SEO text + FAQ) */
+.home-content-sections {
+  padding: 0 16px 24px;
+}
+.home-content-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--c-line);
+  border-radius: 4px;
+}
+.home-content-section p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--c-text);
+  margin-bottom: 8px;
+}
+.home-content-h2 {
+  font-size: 18px;
+  color: var(--c-brand-red);
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+.home-content-h3 {
+  font-size: 15px;
+  color: var(--c-text);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+.home-content-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.home-content-list li {
+  padding: 5px 0 5px 20px;
+  position: relative;
+  font-size: 13px;
+  color: var(--c-text);
+}
+.home-content-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--c-brand-green);
+  font-weight: 700;
+}
+.home-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.home-faq-item {
+  padding: 12px;
+  background: #f9f9f9;
+  border-left: 3px solid var(--c-brand-red);
+  border-radius: 0 4px 4px 0;
+}
+.home-faq-item h4 {
+  font-size: 13px;
+  color: var(--c-text);
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+.home-faq-item p {
+  font-size: 12.5px;
+  color: var(--c-text-soft);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Product sections: alternating 3 and 4 columns */
+.home-section-3 .product-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+.home-section-4 .product-grid {
+  grid-template-columns: repeat(4, 1fr);
+}

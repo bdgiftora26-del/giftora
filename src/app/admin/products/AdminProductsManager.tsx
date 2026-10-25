@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Trash2, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Trash2, Plus, Search, ChevronLeft, ChevronRight, Edit2, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 const PER_PAGE = 15
@@ -26,6 +26,7 @@ export function AdminProductsManager() {
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
   const [showAdd, setShowAdd] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
 
   const fetchPage = useCallback(async (pageNum: number, search: string) => {
     setLoading(true)
@@ -75,6 +76,7 @@ export function AdminProductsManager() {
       <Link href="/admin" className="admin-back-link">← Back to Dashboard</Link>
 
       {showAdd && <AddProductForm onAdded={() => { fetchPage(page, q); setShowAdd(false) }} />}
+      {editingId && <EditProductForm productId={editingId} onDone={() => { setEditingId(null); fetchPage(page, q) }} />}
 
       <div className="admin-search">
         <Search size={14} style={{ position: 'absolute', left: 12, top: 12, color: '#999' }} />
@@ -124,17 +126,22 @@ export function AdminProductsManager() {
                     </button>
                   </td>
                   <td>
-                    <button type="button" onClick={() => deleteProduct(p.id, p.name)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545' }}>
-                      <Trash2 size={14} />
-                    </button>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button type="button" onClick={() => setEditingId(p.id)}
+                        className="admin-btn admin-btn-outline" style={{ padding: '3px 8px' }} title="Edit">
+                        <Edit2 size={13} />
+                      </button>
+                      <button type="button" onClick={() => deleteProduct(p.id, p.name)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545' }} title="Delete">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 16 }}>
               <button type="button" className="admin-btn admin-btn-outline" disabled={page === 1 || loading}
@@ -153,6 +160,57 @@ export function AdminProductsManager() {
         </>
       )}
     </div>
+  )
+}
+
+function EditProductForm({ productId, onDone }: { productId: number; onDone: () => void }) {
+  const [data, setData] = useState<any>(null)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/admin/products/${productId}`).then(r => r.json()).then(d => setData(d.product))
+  }, [productId])
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    const res = await fetch(`/api/admin/products/${productId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: data.name, priceBdt: Number(data.priceBdt), salePriceBdt: data.salePriceBdt ? Number(data.salePriceBdt) : null,
+        description: data.description, imageUrl: data.imageUrl, isActive: data.isActive, isCake: data.isCake,
+      }),
+    })
+    setSaving(false)
+    if (res.ok) { toast.success('Product updated!'); onDone() }
+    else { toast.error('Failed to update') }
+  }
+
+  if (!data) return <div className="admin-form"><p>Loading product...</p></div>
+
+  return (
+    <form onSubmit={save} className="admin-form">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h3>Edit Product</h3>
+        <button type="button" onClick={onDone} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
+      </div>
+      <div className="admin-form-row"><label>Name</label><input value={data.name || ''} onChange={(e) => setData({ ...data, name: e.target.value })} /></div>
+      <div className="admin-form-row"><label>Price (BDT)</label><input type="number" value={data.priceBdt || ''} onChange={(e) => setData({ ...data, priceBdt: e.target.value })} /></div>
+      <div className="admin-form-row"><label>Sale Price</label><input type="number" value={data.salePriceBdt || ''} onChange={(e) => setData({ ...data, salePriceBdt: e.target.value })} placeholder="Optional" /></div>
+      <div className="admin-form-row"><label>Image URL</label><input value={data.imageUrl || ''} onChange={(e) => setData({ ...data, imageUrl: e.target.value })} placeholder="/products/photo.jpg" /></div>
+      <div className="admin-form-row" style={{ alignItems: 'flex-start' }}><label style={{ marginTop: 4 }}>Description</label><textarea value={data.description || ''} onChange={(e) => setData({ ...data, description: e.target.value })} rows={4} style={{ height: 'auto' }} /></div>
+      <div className="admin-form-row">
+        <label>Active</label>
+        <input type="checkbox" checked={data.isActive} onChange={(e) => setData({ ...data, isActive: e.target.checked })} style={{ width: 'auto' }} />
+      </div>
+      <div className="admin-form-row">
+        <label>Is Cake</label>
+        <input type="checkbox" checked={data.isCake} onChange={(e) => setData({ ...data, isCake: e.target.checked })} style={{ width: 'auto' }} />
+      </div>
+      <div style={{ textAlign: 'right' }}>
+        <button type="submit" className="admin-btn admin-btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
+      </div>
+    </form>
   )
 }
 

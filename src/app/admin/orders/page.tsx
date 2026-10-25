@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { toNumber } from '@/lib/money'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { OrderStatusChanger } from './OrderStatusChanger'
+import { OrderViewModal } from './OrderViewModal'
 
 export const dynamic = 'force-dynamic'
 
@@ -81,7 +82,7 @@ export default async function AdminOrdersPage({
                   </td>
                   <td>{new Date(o.createdAt).toLocaleDateString()}</td>
                   <td>
-                    <Link href={`/checkout/complete/${o.orderNo}`} className="text-green" style={{ fontSize: 11 }}>View</Link>
+                    <OrderViewModal orderNo={o.orderNo} />
                   </td>
                 </tr>
               ))}

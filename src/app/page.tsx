@@ -4,6 +4,7 @@ import { StorefrontShell } from '@/components/layout/StorefrontShell'
 import { HomeHero } from '@/components/home/HomeHero'
 import { HomeProductSections } from '@/components/home/HomeProductSections'
 import { HomeSidebar } from '@/components/home/HomeSidebar'
+import { HomeContentSections } from '@/components/home/HomeContentSections'
 import Link from 'next/link'
 
 const LOCALE = 'en'
@@ -74,13 +75,14 @@ export default async function HomePage() {
         <main className="content-main">
           <HomeProductSections
             sections={[
-              { title: 'Fresh Flowers', products: flowers },
-              { title: 'Popular Cakes', products: cakes },
-              { title: 'Food Items', products: food },
-              { title: 'Anniversary Gifts', products: anniversary },
-              { title: 'Gift Baskets & Combos', products: giftBaskets },
+              { title: 'Fresh Flowers', products: flowers, cols: 3 },
+              { title: 'Popular Cakes', products: cakes, cols: 4 },
+              { title: 'Food Items', products: food, cols: 3 },
+              { title: 'Anniversary Gifts', products: anniversary, cols: 4 },
+              { title: 'Gift Baskets & Combos', products: giftBaskets, cols: 3 },
             ]}
           />
+          <HomeContentSections />
           {seoLinks.length > 0 && (
             <section className="seo-links">
               <div className="section-header">All Categories</div>
