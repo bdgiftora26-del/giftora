@@ -415,3 +415,35 @@ Live verification:
 - Admin products: 200 (full CRUD)
 - Admin sliders: 200 (add/delete slides)
 - Admin orders: 200 (status management)
+
+---
+Task ID: admin-separate-ui-brand-audit
+Agent: main
+Task: Admin separate UI + brand → bdgiftora.com + deep audit
+
+1. Admin Panel — completely separate UI:
+- New AdminShell component (dark #1a1a2e topbar, white sidebar, no storefront header/footer)
+- All 6 admin pages use AdminShell
+- Sidebar: Dashboard, Products, Orders, Home Sliders, Categories
+- Topbar: BDGiftora.com Admin brand, View Site link, Logout button
+- Mobile responsive with slide-in sidebar
+
+2. Brand → bdgiftora.com:
+- site.ts: brand='BDGiftora.com', tagline='Gift Delivery in Bangladesh'
+- layout metadata, admin login, testimonials, checkout, product pages all updated
+- No remaining BDGift.com or UpoharBd references
+
+3. Deep Audit (all passing):
+- 23 storefront pages: all 200
+- Product detail, nested categories, search: all 200
+- 5 API endpoints: all 200
+- Admin CRUD: add/delete product ✅, toggle active ✅, add/delete slider ✅, order status ✅
+- Customer registration + session + account: ✅
+- Full checkout: invoice → delivery → place-order (BG-2026-000003) → track: ✅
+- 344 products, 12 categories, 6 currencies
+- Lint: 0 errors
+
+Remaining items for full launch:
+- Admin product edit form (currently add/delete/toggle only, no inline edit)
+- Customer payment proof upload UI (API exists, no form yet)
+- Old /admin/banners page redundant with /admin/sliders
