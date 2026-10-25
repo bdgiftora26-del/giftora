@@ -447,3 +447,30 @@ Remaining items for full launch:
 - Admin product edit form (currently add/delete/toggle only, no inline edit)
 - Customer payment proof upload UI (API exists, no form yet)
 - Old /admin/banners page redundant with /admin/sliders
+
+---
+Task ID: pagination-speed-brand
+Agent: main
+Task: Admin pagination + speed optimization + static brand pages
+
+1. Admin pagination (15 per page):
+- Products: client-side pagination (344 products → 14 pages), prev/next + page counter
+- Orders: server-side pagination with page query param, status filter preserved
+- Verified: 15 rows per page, "Page 1 of 14" displayed
+
+2. Speed optimization:
+- HomeSidebar: 60s in-memory cache (avoid repeated DB hits on warm requests)
+- Home page: select only needed fields (not include), take 6 (was 8)
+- Category subtree lookup cached per request (Map)
+- Fewer DB queries: single product query for all sidebar widgets
+- Result: warm home 6.4s (was 14s), category 1.8s, about 1.1s locally
+- Live: home warm 12s (was 21s), about-us 3.5s
+
+3. Static CMS pages (brand = BDGiftora.com):
+- 8 pages updated: About Us, How to Order, How to Pay, Delivery Info,
+  Terms, FAQ, Privacy Policy, Refund & Return Policy
+- All in EN + BN locales
+- Verified: 31 "BDGiftora" mentions, 0 "BDGift.com" or "UpoharBd"
+
+Note: Live cold start ~28s is Vercel Hobby limitation (serverless cold start + Supabase pooler).
+Warm requests are much faster. For sub-2s cold starts, would need Vercel Pro + edge functions.
