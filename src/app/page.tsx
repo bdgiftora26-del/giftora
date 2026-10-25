@@ -5,7 +5,6 @@ import { HomeHero } from '@/components/home/HomeHero'
 import { HomeProductSections } from '@/components/home/HomeProductSections'
 import { HomeSidebar } from '@/components/home/HomeSidebar'
 import { HomeContentSections } from '@/components/home/HomeContentSections'
-import Link from 'next/link'
 
 const LOCALE = 'en'
 
@@ -36,8 +35,7 @@ async function fetchByTopCategory(topSlug: string, take = 6) {
 }
 
 export default async function HomePage() {
-  // First fetch categories, then products by top-level category (including children)
-  const [flowers, cakes, food, anniversary, giftBaskets, allCategories] = (await allSettledFallback([
+  const [flowers, cakes, food, anniversary, giftBaskets] = (await allSettledFallback([
     { run: () => fetchByTopCategory('flowers', 6), fallback: [] as any },
     { run: () => fetchByTopCategory('cake', 6), fallback: [] as any },
     { run: () => fetchByTopCategory('food', 6), fallback: [] as any },
@@ -50,22 +48,7 @@ export default async function HomePage() {
       },
       fallback: [] as any,
     },
-    {
-      run: () => db.category.findMany({
-        where: { parentId: null, isActive: true, showInSidebar: true },
-        select: { slug: true, i18n: { where: { locale: LOCALE }, select: { name: true, locale: true } } },
-        orderBy: { sortOrder: 'asc' },
-      }),
-      fallback: [] as any,
-    },
   ])) as any
-
-  const seoLinks = allCategories
-    .map((c) => {
-      const i18n = c.i18n.find((x) => x.locale === LOCALE) || c.i18n.find((x) => x.locale === 'en')
-      return { name: i18n?.name || c.slug, href: `/${c.slug}` }
-    })
-    .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <StorefrontShell>
@@ -83,16 +66,6 @@ export default async function HomePage() {
             ]}
           />
           <HomeContentSections />
-          {seoLinks.length > 0 && (
-            <section className="seo-links">
-              <div className="section-header">All Categories</div>
-              <div className="seo-links-grid">
-                {seoLinks.map((l) => (
-                  <Link key={l.href} href={l.href}>{l.name}</Link>
-                ))}
-              </div>
-            </section>
-          )}
         </main>
       </div>
     </StorefrontShell>

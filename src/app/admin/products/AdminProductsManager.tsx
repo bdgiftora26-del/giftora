@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Trash2, Plus, Search, ChevronLeft, ChevronRight, Edit2, X } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Edit2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
-
-const PER_PAGE = 15
+import { ProductEditModal } from './ProductEditModal'
 
 type Product = {
   id: number
@@ -25,8 +24,9 @@ export function AdminProductsManager() {
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
-  const [showAdd, setShowAdd] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [modalState, setModalState] = useState<{ open: boolean; productId: number | null; isNew: boolean }>({
+    open: false, productId: null, isNew: false,
+  })
 
   const fetchPage = useCallback(async (pageNum: number, search: string) => {
     setLoading(true)
@@ -45,15 +45,6 @@ export function AdminProductsManager() {
     return () => clearTimeout(timer)
   }, [page, q, fetchPage])
 
-  async function deleteProduct(id: number, name: string) {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
-    const res = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' })
-    if (res.ok) {
-      toast.success('Product deleted')
-      fetchPage(page, q)
-    } else { toast.error('Failed to delete') }
-  }
-
   async function toggleActive(id: number, current: boolean) {
     const res = await fetch(`/api/admin/products/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -64,19 +55,33 @@ export function AdminProductsManager() {
     }
   }
 
+  function openEdit(id: number) {
+    setModalState({ open: true, productId: id, isNew: false })
+  }
+
+  function openAdd() {
+    setModalState({ open: true, productId: null, isNew: true })
+  }
+
+  function closeModal() {
+    setModalState({ open: false, productId: null, isNew: false })
+  }
+
+  function onSaved() {
+    closeModal()
+    fetchPage(page, q)
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h2 className="admin-page-title">Products ({total})</h2>
-        <button type="button" className="admin-btn admin-btn-primary" onClick={() => setShowAdd(!showAdd)}>
+        <button type="button" className="admin-btn admin-btn-primary" onClick={openAdd}>
           <Plus size={14} /> Add Product
         </button>
       </div>
 
       <Link href="/admin" className="admin-back-link">← Back to Dashboard</Link>
-
-      {showAdd && <AddProductForm onAdded={() => { fetchPage(page, q); setShowAdd(false) }} />}
-      {editingId && <EditProductForm productId={editingId} onDone={() => { setEditingId(null); fetchPage(page, q) }} />}
 
       <div className="admin-search">
         <Search size={14} style={{ position: 'absolute', left: 12, top: 12, color: '#999' }} />
@@ -126,16 +131,10 @@ export function AdminProductsManager() {
                     </button>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button type="button" onClick={() => setEditingId(p.id)}
-                        className="admin-btn admin-btn-outline" style={{ padding: '3px 8px' }} title="Edit">
-                        <Edit2 size={13} />
-                      </button>
-                      <button type="button" onClick={() => deleteProduct(p.id, p.name)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545' }} title="Delete">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                    <button type="button" onClick={() => openEdit(p.id)}
+                      className="admin-btn admin-btn-outline" style={{ padding: '3px 10px' }}>
+                      <Edit2 size={13} /> Edit
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -159,92 +158,16 @@ export function AdminProductsManager() {
           )}
         </>
       )}
+
+      {/* Product edit/add modal */}
+      {modalState.open && (
+        <ProductEditModal
+          productId={modalState.productId}
+          isNew={modalState.isNew}
+          onClose={closeModal}
+          onSaved={onSaved}
+        />
+      )}
     </div>
-  )
-}
-
-function EditProductForm({ productId, onDone }: { productId: number; onDone: () => void }) {
-  const [data, setData] = useState<any>(null)
-  const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    fetch(`/api/admin/products/${productId}`).then(r => r.json()).then(d => setData(d.product))
-  }, [productId])
-
-  async function save(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    const res = await fetch(`/api/admin/products/${productId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: data.name, priceBdt: Number(data.priceBdt), salePriceBdt: data.salePriceBdt ? Number(data.salePriceBdt) : null,
-        description: data.description, imageUrl: data.imageUrl, isActive: data.isActive, isCake: data.isCake,
-      }),
-    })
-    setSaving(false)
-    if (res.ok) { toast.success('Product updated!'); onDone() }
-    else { toast.error('Failed to update') }
-  }
-
-  if (!data) return <div className="admin-form"><p>Loading product...</p></div>
-
-  return (
-    <form onSubmit={save} className="admin-form">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h3>Edit Product</h3>
-        <button type="button" onClick={onDone} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
-      </div>
-      <div className="admin-form-row"><label>Name</label><input value={data.name || ''} onChange={(e) => setData({ ...data, name: e.target.value })} /></div>
-      <div className="admin-form-row"><label>Price (BDT)</label><input type="number" value={data.priceBdt || ''} onChange={(e) => setData({ ...data, priceBdt: e.target.value })} /></div>
-      <div className="admin-form-row"><label>Sale Price</label><input type="number" value={data.salePriceBdt || ''} onChange={(e) => setData({ ...data, salePriceBdt: e.target.value })} placeholder="Optional" /></div>
-      <div className="admin-form-row"><label>Image URL</label><input value={data.imageUrl || ''} onChange={(e) => setData({ ...data, imageUrl: e.target.value })} placeholder="/products/photo.jpg" /></div>
-      <div className="admin-form-row" style={{ alignItems: 'flex-start' }}><label style={{ marginTop: 4 }}>Description</label><textarea value={data.description || ''} onChange={(e) => setData({ ...data, description: e.target.value })} rows={4} style={{ height: 'auto' }} /></div>
-      <div className="admin-form-row">
-        <label>Active</label>
-        <input type="checkbox" checked={data.isActive} onChange={(e) => setData({ ...data, isActive: e.target.checked })} style={{ width: 'auto' }} />
-      </div>
-      <div className="admin-form-row">
-        <label>Is Cake</label>
-        <input type="checkbox" checked={data.isCake} onChange={(e) => setData({ ...data, isCake: e.target.checked })} style={{ width: 'auto' }} />
-      </div>
-      <div style={{ textAlign: 'right' }}>
-        <button type="submit" className="admin-btn admin-btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
-      </div>
-    </form>
-  )
-}
-
-function AddProductForm({ onAdded }: { onAdded: () => void }) {
-  const [name, setName] = useState('')
-  const [price, setPrice] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
-  const [category, setCategory] = useState('')
-  const [description, setDescription] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    const res = await fetch('/api/admin/products', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, priceBdt: Number(price), imageUrl, categorySlug: category, description }),
-    })
-    setSaving(false)
-    if (res.ok) { toast.success('Product added!'); onAdded() }
-    else { toast.error('Failed to add product') }
-  }
-
-  return (
-    <form onSubmit={submit} className="admin-form">
-      <h3>Add New Product</h3>
-      <div className="admin-form-row"><label>Name *</label><input value={name} onChange={(e) => setName(e.target.value)} required /></div>
-      <div className="admin-form-row"><label>Price (BDT) *</label><input type="number" value={price} onChange={(e) => setPrice(e.target.value)} required /></div>
-      <div className="admin-form-row"><label>Image URL</label><input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="/products/photo.jpg" /></div>
-      <div className="admin-form-row"><label>Category</label><input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="flowers / cake / food..." /></div>
-      <div className="admin-form-row" style={{ alignItems: 'flex-start' }}><label style={{ marginTop: 4 }}>Description</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} style={{ height: 'auto' }} /></div>
-      <div style={{ textAlign: 'right' }}>
-        <button type="submit" className="admin-btn admin-btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Product'}</button>
-      </div>
-    </form>
   )
 }

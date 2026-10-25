@@ -1037,16 +1037,16 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   height: 30px;
 }
 
-/* Home content sections (SEO text + FAQ) */
+/* Home content sections (SEO text + FAQ) — same width as product sections */
 .home-content-sections {
-  padding: 0 16px 24px;
+  margin-top: 16px;
 }
 .home-content-section {
-  margin-bottom: 24px;
-  padding: 16px;
+  margin-bottom: 12px;
+  padding: 14px;
   background: #fff;
   border: 1px solid var(--c-line);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 .home-content-section p {
   font-size: 13px;
