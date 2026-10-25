@@ -9,51 +9,38 @@ const LOCALE = 'en'
 
 export const dynamic = "force-dynamic"
 
+// Fetch products in a top-level category AND its children
+async function fetchByTopCategory(topSlug: string, take = 8) {
+  // Find the top category + all its child category ids
+  const top = await db.category.findFirst({ where: { slug: topSlug, parentId: null } })
+  if (!top) return []
+  const children = await db.category.findMany({ where: { parentId: top.id }, select: { id: true } })
+  const catIds = [top.id, ...children.map(c => c.id)]
+  return db.product.findMany({
+    where: { isActive: true, categories: { some: { categoryId: { in: catIds } } } },
+    include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
+    orderBy: { orderCount: 'desc' }, take,
+  })
+}
+
 export default async function HomePage() {
-  const [flowers, cakes, food, teddy, giftBaskets, allCategories] = (await allSettledFallback([
+  // First fetch categories, then products by top-level category (including children)
+  const [flowers, cakes, food, anniversary, giftBaskets, allCategories] = (await allSettledFallback([
+    { run: () => fetchByTopCategory('flowers', 8), fallback: [] as any },
+    { run: () => fetchByTopCategory('cake', 8), fallback: [] as any },
+    { run: () => fetchByTopCategory('food', 8), fallback: [] as any },
+    { run: () => fetchByTopCategory('anniversary', 8), fallback: [] as any },
     {
-      run: () => db.product.findMany({
-        where: { isActive: true, categories: { some: { category: { slug: 'fresh-flower-and-roses' } } } },
-        include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
-        orderBy: { orderCount: 'desc' }, take: 6,
-      }),
-      fallback: [] as any,
-    },
-    {
-      run: () => db.product.findMany({
-        where: { isActive: true, isCake: true },
-        include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
-        orderBy: { orderCount: 'desc' }, take: 6,
-      }),
-      fallback: [] as any,
-    },
-    {
-      run: () => db.product.findMany({
-        where: { isActive: true, categories: { some: { category: { slug: 'food-court' } } } },
-        include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
-        orderBy: { orderCount: 'desc' }, take: 6,
-      }),
-      fallback: [] as any,
-    },
-    {
-      run: () => db.product.findMany({
-        where: { isActive: true, categories: { some: { category: { slug: 'teddy-bear-and-soft-toys' } } } },
-        include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
-        orderBy: { orderCount: 'desc' }, take: 6,
-      }),
-      fallback: [] as any,
-    },
-    {
-      run: () => db.product.findMany({
-        where: { isActive: true, salePriceBdt: { not: null } },
-        include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
-        orderBy: { orderCount: 'desc' }, take: 6,
-      }),
+      run: async () => {
+        const baskets = await fetchByTopCategory('gift-baskets', 4)
+        const combos = await fetchByTopCategory('combo-gifts', 4)
+        return [...baskets, ...combos].slice(0, 8)
+      },
       fallback: [] as any,
     },
     {
       run: () => db.category.findMany({
-        where: { parentId: null, isActive: true },
+        where: { parentId: null, isActive: true, showInSidebar: true },
         include: { i18n: true },
         orderBy: { sortOrder: 'asc' },
       }),
@@ -75,11 +62,11 @@ export default async function HomePage() {
         <div className="home-content">
           <HomeProductSections
             sections={[
-              { title: 'Latest Flowers', products: flowers },
+              { title: 'Fresh Flowers', products: flowers },
               { title: 'Popular Cakes', products: cakes },
               { title: 'Food Items', products: food },
-              { title: 'Teddy Bears & Gifts', products: teddy },
-              { title: 'Special Offers', products: giftBaskets },
+              { title: 'Anniversary Gifts', products: anniversary },
+              { title: 'Gift Baskets & Combos', products: giftBaskets },
             ]}
           />
           {seoLinks.length > 0 && (
