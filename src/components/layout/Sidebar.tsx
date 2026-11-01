@@ -97,11 +97,7 @@ export function Sidebar({
             >
               {currencies.map((c) => (
                 <option key={c.code} value={c.code}>
-                  {c.code === 'USD'
-                    ? 'US Dollars (US$)'
-                    : c.code === 'BDT'
-                      ? 'Bangladeshi Taka (৳)'
-                      : `${c.name} (${c.symbol})`}
+                  {c.name} ({c.symbol})
                 </option>
               ))}
             </select>

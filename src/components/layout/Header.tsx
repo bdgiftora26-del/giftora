@@ -33,12 +33,12 @@ export function Header() {
             />
             <div className="logo-meta">
               <span className="logo-tagline">{siteConfig.tagline}</span>
-              <a href="tel:+8801700000000" className="header-phone">
-                <Phone size={12} /> +880 1700-000000
+              <a href="tel:+8801719818182" className="header-phone">
+                <Phone size={12} /> +880 1719-818182
               </a>
               <div className="header-socials">
                 <a href={siteConfig.social.facebook} aria-label="Facebook" className="social-mini"><Facebook size={11} /></a>
-                <a href="https://wa.me/8801700000000" aria-label="WhatsApp" className="social-mini"><MessageCircle size={11} /></a>
+                <a href="https://wa.me/8801719818182" aria-label="WhatsApp" className="social-mini"><MessageCircle size={11} /></a>
               </div>
             </div>
           </Link>

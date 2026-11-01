@@ -39,6 +39,8 @@ const CURRENCY_PREFIX: Record<string, string> = {
   AUD: 'AUD $',
   CAD: 'CAD $',
   EUR: 'EUR €',
+  INR: '₹',
+  SGD: 'S$',
 }
 
 export function formatPrice(amount: number, currency: CurrencyInfo): string {

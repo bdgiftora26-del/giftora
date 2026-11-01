@@ -15,13 +15,13 @@ export const siteConfig = {
   tradeLicense: 'Gift Delivery Service Trading License in Bangladesh (Sample — update with real license)',
   // Contact info — bdgift.com numbers
   email: 'info@bdgiftora.com',
-  phone: '+880 1700-000000',
-  whatsapp: '+880 1700-000000',
-  address: 'Dhaka, Bangladesh',
+  phone: '+8801719818182',
+  whatsapp: '+8801719818182',
+  address: '21/3, Johurabad, Darussalam, Mirpur 1, Dhaka 1216',
   defaultCitySlug: 'dhaka',
   orderPrefix: 'BG',
   defaultCurrency: 'USD',
-  currencies: ['USD', 'BDT', 'GBP', 'AUD', 'CAD', 'EUR'] as const,
+  currencies: ['USD', 'AUD', 'GBP', 'CAD', 'EUR', 'INR', 'SGD'] as const,
   locales: ['en', 'bn'] as const,
   defaultLocale: 'en',
   social: {
