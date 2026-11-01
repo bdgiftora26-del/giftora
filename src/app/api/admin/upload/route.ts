@@ -1,17 +1,12 @@
 import { NextResponse } from 'next/server'
 import { getAdminSession } from '@/lib/admin-auth'
-import { writeFile, mkdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
-// In-memory store for uploaded files (persists across requests within same serverless instance)
-// Falls back to /tmp on Vercel (persists within same warm instance)
-const fileStore = new Map<string, { buffer: Buffer; type: string }>()
-
-// Upload image file → saves to /tmp + in-memory → returns URL
+// Upload image file → converts to base64 data URL → returns URL
+// This works on Vercel serverless (no filesystem writes needed)
 export async function POST(req: Request) {
   const isAdmin = await getAdminSession()
   if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -29,36 +24,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Only image files allowed (JPG, PNG, WebP, GIF, SVG). Got: ${file.type} / .${ext}` }, { status: 400 })
   }
 
-  // Validate size (max 5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    return NextResponse.json({ error: 'File too large (max 5MB)' }, { status: 400 })
+  // Validate size (max 2MB — base64 increases size by ~33%)
+  if (file.size > 2 * 1024 * 1024) {
+    return NextResponse.json({ error: 'File too large (max 2MB for uploaded images)' }, { status: 400 })
   }
 
-  // Generate unique filename
-  const safeExt = validExts.includes(ext) ? ext : 'jpg'
-  const filename = `${randomUUID()}.${safeExt}`
+  // Convert to base64 data URL
   const bytes = await file.arrayBuffer()
   const buffer = Buffer.from(bytes)
+  const safeExt = validExts.includes(ext) ? ext : 'jpg'
+  const mimeType = safeExt === 'svg' ? 'image/svg+xml' : `image/${safeExt === 'jpg' ? 'jpeg' : safeExt}`
+  const base64 = buffer.toString('base64')
+  const dataUrl = `data:${mimeType};base64,${base64}`
 
-  // Store in memory (works on both local + Vercel)
-  fileStore.set(filename, { buffer, type: file.type || `image/${safeExt}` })
-
-  // Also try writing to /tmp and /public/uploads (works locally, /tmp works on Vercel)
-  try {
-    const tmpDir = join('/tmp', 'uploads')
-    await mkdir(tmpDir, { recursive: true })
-    await writeFile(join(tmpDir, filename), buffer)
-  } catch {}
-
-  try {
-    const publicDir = join(process.cwd(), 'public', 'uploads')
-    await mkdir(publicDir, { recursive: true })
-    await writeFile(join(publicDir, filename), buffer)
-  } catch {}
-
-  const url = `/api/admin/file/${filename}`
-  return NextResponse.json({ ok: true, url })
+  return NextResponse.json({ ok: true, url: dataUrl })
 }
-
-// Export fileStore for use in the file serving route
-export { fileStore }
