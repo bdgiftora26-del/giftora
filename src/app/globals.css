@@ -635,8 +635,8 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   .product-detail-top { gap: 10px; }
   .product-main-img { width: 100%; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
   .product-detail-h1 { font-size: 16px; }
-  .product-card { padding: 8px; border-radius: 6px; }
-  .product-card-img { width: 100%; max-width: 140px; }
+  .product-card { padding: 10px; border-radius: 6px; }
+  .product-card-img { width: 100%; max-width: 100%; height: auto; aspect-ratio: 1; }
   .product-card-name { font-size: 13px; min-height: 36px; }
   .product-card-price { font-size: 15px; }
   .product-card-actions { flex-wrap: wrap; gap: 4px; }
