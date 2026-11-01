@@ -12,7 +12,7 @@ const TOP_NAV = [
 ]
 
 export async function Footer() {
-  // Fetch actual categories from DB
+  // Fetch actual categories from DB — only top-level (children need /parent/child path)
   let allCategories: { name: string; slug: string }[] = []
   try {
     const cats = await db.category.findMany({
@@ -24,9 +24,13 @@ export async function Footer() {
       orderBy: { sortOrder: 'asc' },
     })
     cats.forEach((c) => {
-      allCategories.push({ name: c.i18n[0]?.name || c.slug, slug: c.slug })
+      const parentSlug = c.slug
+      const parentName = c.i18n[0]?.name || c.slug
+      // Add top-level category
+      allCategories.push({ name: parentName, slug: parentSlug })
+      // Add children with full path: /parent/child
       c.children.forEach((ch) => {
-        allCategories.push({ name: ch.i18n[0]?.name || ch.slug, slug: ch.slug })
+        allCategories.push({ name: ch.i18n[0]?.name || ch.slug, slug: `${parentSlug}/${ch.slug}` })
       })
     })
   } catch {}
