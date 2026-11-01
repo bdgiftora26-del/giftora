@@ -474,3 +474,29 @@ Task: Admin pagination + speed optimization + static brand pages
 
 Note: Live cold start ~28s is Vercel Hobby limitation (serverless cold start + Supabase pooler).
 Warm requests are much faster. For sub-2s cold starts, would need Vercel Pro + edge functions.
+
+---
+Task ID: category-crud
+Agent: main
+Task: Admin category CRUD (add/edit/delete) with real-time frontend
+
+API routes:
+- GET /api/admin/categories — full tree with children
+- POST /api/admin/categories — create (name, parentId, icon, showInSidebar)
+- PATCH /api/admin/categories/[id] — update (name, icon, showInSidebar, sortOrder)
+- DELETE /api/admin/categories/[id] — delete (blocks if has children)
+
+Admin UI (CategoryManager):
+- Tree view: top-level with expandable children
+- Add Category (top-level) + Add Child (per category)
+- Edit modal: name, icon key, show in sidebar toggle
+- Delete with safety check (blocks if has children)
+- Same modal for add + edit
+
+Real-time frontend:
+- Removed HomeSidebar 60s cache → fresh DB query every request
+- getSidebarCategories: no cache (direct DB)
+- All pages force-dynamic → real-time updates
+- Verified locally: add → shows immediately, edit → rename shows immediately, delete → disappears immediately
+
+Live verified: add ✅, delete ✅, categories API ✅, admin page 200 @ 0.5s
