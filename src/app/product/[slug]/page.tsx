@@ -4,7 +4,7 @@ import { StorefrontShell } from '@/components/layout/StorefrontShell'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { Price } from '@/components/Price'
 import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
-import { AddToBasket, type VariantData } from '@/components/product/AddToBasket'
+import { AddToBasket, type VariantData, type AddOnProduct } from '@/components/product/AddToBasket'
 import { ProductTabs } from '@/components/product/ProductTabs'
 import { toNumber } from '@/lib/money'
 import type { Metadata } from 'next'
@@ -101,6 +101,16 @@ export default async function ProductPage({
     alsoBought = related.length > 0 ? related : crossSell.slice().reverse()
   } catch {}
 
+  let addOns: { id: number; slug: string; name: string; priceBdt: number }[] = []
+  try {
+    const addOnProducts = await db.product.findMany({
+      where: { sku: { startsWith: "ADD-" }, isActive: true },
+      select: { id: true, slug: true, priceBdt: true, i18n: { where: { locale }, select: { name: true } } },
+      orderBy: { sku: "asc" },
+    })
+    addOns = addOnProducts.map((p) => ({ id: p.id, slug: p.slug, name: p.i18n[0]?.name || p.slug, priceBdt: toNumber(p.priceBdt) }))
+  } catch {}
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -181,6 +191,7 @@ export default async function ProductPage({
             stockMode={product.stockMode}
             stockQty={product.stockQty}
             variants={variants}
+            addOns={addOns}
           />
         </div>
       </div>

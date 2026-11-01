@@ -1352,3 +1352,18 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   padding: 14px;
   background: #fff;
 }
+
+/* Product add-ons (Make It Extra Special With) */
+.product-right-column { display: flex; flex-direction: column; gap: 8px; }
+.product-addons-section { margin: 12px 0; padding: 12px; border: 1px solid var(--c-line); border-radius: 4px; background: #fafafa; }
+.product-addons-title { font-size: 13px; font-weight: 700; color: var(--c-brand-red); margin-bottom: 8px; text-transform: uppercase; }
+.product-addons-list { display: flex; flex-direction: column; gap: 4px; }
+.product-addon-item { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 0; cursor: pointer; }
+.product-addon-item input[type="checkbox"] { width: auto; margin: 0; }
+.product-addon-name { flex: 1; color: var(--c-text); }
+.product-addon-price { color: var(--c-text); font-weight: 600; white-space: nowrap; }
+.product-addon-section { margin: 8px 0; }
+.product-addon-label { display: block; font-size: 12px; font-weight: 600; color: var(--c-text); margin-bottom: 4px; }
+.product-addon-input, .product-addon-textarea { width: 100%; border: 1px solid var(--c-line-strong); border-radius: 3px; padding: 6px 8px; font-size: 12px; }
+.product-addon-textarea { height: auto; resize: vertical; }
+@media (max-width: 768px) { .product-addon-item { font-size: 11px; } .product-addons-list { max-height: 300px; overflow-y: auto; } }
