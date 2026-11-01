@@ -159,6 +159,10 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
 .main-nav {
   background: var(--c-brand-red);
   border-bottom: 2px solid var(--c-brand-red-dark);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 .main-nav-inner {
   max-width: var(--content-width);

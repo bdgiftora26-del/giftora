@@ -5,7 +5,6 @@ import { Header } from '@/components/layout/Header'
 import { MainNav } from '@/components/layout/MainNav'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Footer } from '@/components/layout/Footer'
-import { FloatingDiscount } from '@/components/layout/FloatingDiscount'
 
 // NOTE: We intentionally do NOT read cookies() here (would make routes dynamic → no ISR cache).
 
@@ -38,7 +37,6 @@ export async function StorefrontShell({
         </div>
         <Footer />
       </div>
-      <FloatingDiscount />
     </div>
   )
 }
