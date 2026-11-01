@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
 
 const PER_PAGE = 48
@@ -8,24 +8,22 @@ const PER_PAGE = 48
 const SORTS = ['default', 'price-asc', 'price-desc', 'name-asc', 'popular', 'newest'] as const
 type Sort = (typeof SORTS)[number]
 
-export function CategoryProductsClient({ categorySlug, categoryName }: { categorySlug: string; categoryName: string }) {
-  const [products, setProducts] = useState<ProductCardData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+// Receives ALL products for the category as `initialProducts` from the server.
+// No useEffect, no fetch, no loading spinner — the page arrives complete with
+// the product grid already rendered. Sorting + pagination are done client-side
+// on the already-loaded array (instant, no network).
+export function CategoryProductsClient({
+  categorySlug,
+  categoryName,
+  initialProducts,
+}: {
+  categorySlug: string
+  categoryName: string
+  initialProducts: ProductCardData[]
+}) {
+  const [products] = useState<ProductCardData[]>(initialProducts)
   const [sort, setSort] = useState<Sort>('default')
   const [page, setPage] = useState(1)
-
-  useEffect(() => {
-    let active = true
-    setLoading(true)
-    setError(false)
-    fetch(`/api/products?category=${encodeURIComponent(categorySlug)}&sort=default`)
-      .then((r) => { if (!r.ok) throw new Error('Failed'); return r.json() })
-      .then((d) => { if (active) setProducts(d.products || []) })
-      .catch(() => { if (active) setError(true) })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [categorySlug])
 
   const sorted = useMemo(() => {
     const arr = [...products]
@@ -59,11 +57,7 @@ export function CategoryProductsClient({ categorySlug, categoryName }: { categor
         </label>
       </div>
 
-      {loading ? (
-        <p className="muted">Loading products...</p>
-      ) : error ? (
-        <p className="muted">Could not load products. Please refresh.</p>
-      ) : paged.length === 0 ? (
+      {paged.length === 0 ? (
         <p className="muted">No products in this category yet.</p>
       ) : (
         <div className="product-grid">
@@ -71,7 +65,7 @@ export function CategoryProductsClient({ categorySlug, categoryName }: { categor
         </div>
       )}
 
-      {!loading && <div className="product-footer-bar">Showing {paged.length} products</div>}
+      <div className="product-footer-bar">Showing {paged.length} products</div>
 
       {totalPages > 1 && (
         <div className="pager">

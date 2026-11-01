@@ -1,36 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { HomeSlider } from '@/components/home/HomeSlider'
 import { HomeProductSections } from '@/components/home/HomeProductSections'
 import { HomeContentSections } from '@/components/home/HomeContentSections'
 import { Sidebar } from '@/components/layout/Sidebar'
+import type { HomeData } from '@/lib/home-data'
 
-type Slide = { id: number; title: string; imageUrl: string | null; link: string | null }
 type ProductCardData = {
   id: number; slug: string; name: string; priceBdt: number; salePriceBdt: number | null;
   image: string; orderCount: number; firstSoldYear?: number | null; shortDescription?: string;
 }
 
-export function HomeClient() {
-  const [data, setData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/home-data')
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [])
-
-  if (loading || !data) {
-    return (
-      <div style={{ padding: 40, textAlign: 'center', color: '#999' }}>
-        <div style={{ fontSize: 14 }}>Loading...</div>
-      </div>
-    )
-  }
-
+// Pure presentational component — receives ALL data as props from the server.
+// No useEffect, no fetch, no loading spinner. The page arrives complete.
+export function HomeClient({ data }: { data: HomeData }) {
   const mapProducts = (products: any[]): ProductCardData[] => (products || []).map((p) => ({
     id: p.id, slug: p.slug, name: p.name,
     priceBdt: p.priceBdt, salePriceBdt: p.salePriceBdt,

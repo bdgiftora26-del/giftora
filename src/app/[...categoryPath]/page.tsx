@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { StorefrontShell, resolveCategoryPath } from '@/components/layout/StorefrontShell'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { CategoryProductsClient } from '@/components/product/CategoryProductsClient'
+import { getCategoryProducts } from '@/lib/category-products'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -40,6 +41,12 @@ export default async function CategoryPage({
   if (!resolved || resolved.length === 0) notFound()
   const leaf = resolved[resolved.length - 1]
 
+  // Load ALL products for this category SERVER-SIDE (cached). Passed as props
+  // to CategoryProductsClient → no loading spinner, full grid on first paint.
+  const payload = await getCategoryProducts({ category: leaf.slug, sort: 'default', page: 1, perPage: 48 })
+  // Cast to the shape CategoryProductsClient expects.
+  const initialProducts = payload.products as any[]
+
   const crumbs = [
     { label: 'Home', href: '/' },
     ...resolved.map((c, i) => ({
@@ -53,7 +60,7 @@ export default async function CategoryPage({
       <Breadcrumb items={crumbs} />
       <h1 className="category-h1">{leaf.name}</h1>
       {leaf.description && <p className="category-desc">{leaf.description}</p>}
-      <CategoryProductsClient categorySlug={leaf.slug} categoryName={leaf.name} />
+      <CategoryProductsClient categorySlug={leaf.slug} categoryName={leaf.name} initialProducts={initialProducts} />
     </StorefrontShell>
   )
 }
