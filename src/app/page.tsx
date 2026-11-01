@@ -11,8 +11,8 @@ const LOCALE = 'en'
 let homeCache: { ts: number; data: any } | null = null
 const HOME_CACHE_TTL = 30_000
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const dynamic = 'force-static'
+export const revalidate = 30 // CDN cache 30s
 
 // Fetch ALL home page data in a single batch of parallel queries
 async function fetchHomeData() {
