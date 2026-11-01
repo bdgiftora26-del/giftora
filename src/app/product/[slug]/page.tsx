@@ -5,6 +5,7 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { Price } from '@/components/Price'
 import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
 import { AddToBasket, type VariantData } from '@/components/product/AddToBasket'
+import { ProductTabs } from '@/components/product/ProductTabs'
 import { toNumber } from '@/lib/money'
 import type { Metadata } from 'next'
 
@@ -79,6 +80,26 @@ export default async function ProductPage({
       orderCount: p.orderCount,
       firstSoldYear: p.firstSoldYear,
     }))
+
+  // Fetch cross-sell products (same category, excluding current)
+  let crossSell: ProductCardData[] = []
+  let alsoBought: ProductCardData[] = []
+  try {
+    const catIds = product.categories.map((c) => c.categoryId)
+    const sameCatProducts = await db.product.findMany({
+      where: { isActive: true, id: { not: product.id }, categories: { some: { categoryId: { in: catIds } } } },
+      include: { i18n: { where: { locale } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
+      orderBy: { orderCount: 'desc' },
+      take: 4,
+    })
+    crossSell = sameCatProducts.map((p) => ({
+      id: p.id, slug: p.slug, name: p.i18n[0]?.name || p.slug,
+      priceBdt: toNumber(p.priceBdt), salePriceBdt: p.salePriceBdt ? toNumber(p.salePriceBdt) : null,
+      image: p.images[0]?.url || '/placeholders/products/generic-01.svg',
+      orderCount: p.orderCount, firstSoldYear: p.firstSoldYear,
+    }))
+    alsoBought = related.length > 0 ? related : crossSell.slice().reverse()
+  } catch {}
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -164,33 +185,12 @@ export default async function ProductPage({
         </div>
       </div>
 
-      <section className="product-section">
-        <h2 className="product-section-h2">Product Information</h2>
-        {description ? (
-          <div style={{ fontSize: 12.5, lineHeight: 1.6, color: 'var(--c-text-soft)' }}>
-            {description.split('\n').map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
-        ) : (
-          <p className="muted">No description available.</p>
-        )}
-        <div className="product-info-row mt-2">
-          <span className="product-info-label">🎁 Product Code:</span>
-          <span>{product.sku}</span>
-        </div>
-      </section>
-
-      {related.length > 0 && (
-        <section className="product-section">
-          <h2 className="product-section-h2">Customers who bought this also bought…</h2>
-          <div className="related-grid">
-            {related.map((p) => (
-              <ProductCard key={p.id} p={p} />
-            ))}
-          </div>
-        </section>
-      )}
+      <ProductTabs
+        description={description}
+        productCode={product.sku}
+        crossSell={crossSell}
+        alsoBought={alsoBought}
+      />
     </StorefrontShell>
   )
 }

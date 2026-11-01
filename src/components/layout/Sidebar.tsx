@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { CategoryIcon } from '@/components/CategoryIcon'
 import { useCurrency } from '@/components/providers'
 import { Price } from '@/components/Price'
 import { toNumber } from '@/lib/money'
@@ -79,9 +78,7 @@ export function Sidebar({
                   href={c.href}
                   className={`sidebar-item ${active ? 'sidebar-item-active' : ''}`}
                 >
-                  <span className="sidebar-icon">
-                    <CategoryIcon icon={c.icon} />
-                  </span>
+                  <span className="sidebar-arrow">›</span>
                   <span className="sidebar-label">{c.name}</span>
                 </Link>
               )

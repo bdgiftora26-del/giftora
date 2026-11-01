@@ -254,8 +254,8 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
 .sidebar-item-active {
   font-weight: 700; color: var(--c-brand-red); background: #fff5f5;
 }
-.sidebar-icon { color: var(--c-text-soft); display: inline-flex; width: 20px; justify-content: center; }
-.sidebar-item-active .sidebar-icon { color: var(--c-brand-red); }
+.sidebar-arrow { color: var(--c-brand-red); font-size: 14px; font-weight: 700; display: inline-flex; width: 16px; justify-content: center; flex-shrink: 0; }
+.sidebar-item-active .sidebar-arrow { color: var(--c-brand-red-dark); }
 .sidebar-label { flex: 1; word-break: break-word; }
 .sidebar-currency { padding: 10px 12px; border-top: 2px solid var(--c-brand-red); }
 .sidebar-currency-label { display: block; font-size: 11px; color: var(--c-text-soft); margin-bottom: 4px; }
@@ -1268,3 +1268,38 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
 .pay-disc { color: #ff6000; }
 .pay-bkash { color: #e2136e; }
 .pay-mc { padding: 4px 6px; }
+
+/* Product detail tabs (accordion style — bdgift.com reference) */
+.product-tabs {
+  margin: 20px 0;
+}
+.product-tab {
+  border: 1px solid var(--c-line);
+  border-bottom: none;
+}
+.product-tab:last-child {
+  border-bottom: 1px solid var(--c-line);
+}
+.product-tab-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f8f9fa;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text);
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.product-tab-header:hover {
+  background: #f0f0f0;
+}
+.product-tab-body {
+  padding: 14px;
+  background: #fff;
+}
