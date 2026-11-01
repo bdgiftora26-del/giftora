@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Save, Trash2 } from 'lucide-react'
+import { X, Save, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 
@@ -15,11 +15,12 @@ type ProductFormData = {
   categorySlug: string
   isActive: boolean
   isCake: boolean
+  features: string[]
 }
 
 const EMPTY: ProductFormData = {
   name: '', priceBdt: '', salePriceBdt: '', imageUrl: '', description: '',
-  categorySlug: '', isActive: true, isCake: false,
+  categorySlug: '', isActive: true, isCake: false, features: [],
 }
 
 export function ProductEditModal({
@@ -59,6 +60,7 @@ export function ProductEditModal({
             categorySlug: d.product.categories?.[0]?.slug || '',
             isActive: d.product.isActive,
             isCake: d.product.isCake,
+            features: d.product.shortDescription ? d.product.shortDescription.split('|').filter(Boolean) : [],
           })
         }
       })
@@ -76,6 +78,7 @@ export function ProductEditModal({
       description: data.description,
       isActive: data.isActive,
       isCake: data.isCake,
+      features: data.features.filter(Boolean),
     }
 
     try {
@@ -176,6 +179,42 @@ export function ProductEditModal({
             <div className="admin-form-row" style={{ alignItems: 'flex-start' }}>
               <label style={{ marginTop: 4, width: 100 }}>Description</label>
               <textarea value={data.description} onChange={(e) => setData({ ...data, description: e.target.value })} rows={4} style={{ height: 'auto' }} />
+            </div>
+
+            {/* Product Features */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#555', marginBottom: 8 }}>
+                Product Features (shown below price on product page)
+              </label>
+              {data.features.map((feature, i) => (
+                <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                  <input
+                    value={feature}
+                    onChange={(e) => {
+                      const features = [...data.features]
+                      features[i] = e.target.value
+                      setData({ ...data, features })
+                    }}
+                    placeholder={`Feature ${i + 1} (e.g. Kinder Bueno Chocolate – 6 pcs)`}
+                    style={{ flex: 1, padding: '6px 10px', border: '1px solid #ddd', borderRadius: 4, fontSize: 13 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setData({ ...data, features: data.features.filter((_, idx) => idx !== i) })}
+                    style={{ background: '#dc3545', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setData({ ...data, features: [...data.features, ''] })}
+                className="admin-btn admin-btn-outline"
+                style={{ padding: '5px 12px', fontSize: 12 }}
+              >
+                <Plus size={12} /> Add Feature
+              </button>
             </div>
 
             <div style={{ display: 'flex', gap: 20, marginBottom: 16 }}>

@@ -43,7 +43,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const { id } = await params
   const body = await req.json()
-  const { name, priceBdt, salePriceBdt, description, imageUrl, isActive, isCake } = body
+  const { name, priceBdt, salePriceBdt, description, imageUrl, isActive, isCake, features } = body
 
   const update: any = {}
   if (priceBdt !== undefined) update.priceBdt = Number(priceBdt)
@@ -51,15 +51,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (isActive !== undefined) update.isActive = isActive
   if (isCake !== undefined) update.isCake = isCake
 
-  // Update i18n
-  if (name !== undefined || description !== undefined) {
+  // Update i18n (name, description, features → shortDescription as pipe-separated)
+  if (name !== undefined || description !== undefined || features !== undefined) {
     const existing = await db.productI18n.findFirst({ where: { productId: Number(id), locale: 'en' } })
     if (existing) {
       await db.productI18n.update({
         where: { id: existing.id },
         data: {
           ...(name !== undefined ? { name } : {}),
-          ...(description !== undefined ? { description, shortDescription: description.slice(0, 150) } : {}),
+          ...(description !== undefined ? { description } : {}),
+          ...(features !== undefined ? { shortDescription: Array.isArray(features) ? features.filter(Boolean).join('|') : '' } : {}),
         },
       })
     }

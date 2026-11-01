@@ -67,11 +67,13 @@ export async function POST(req: Request) {
   if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { name, priceBdt, salePriceBdt, description, imageUrl, categorySlug, isCake, isActive } = body
+  const { name, priceBdt, salePriceBdt, description, imageUrl, categorySlug, isCake, isActive, features } = body
 
   if (!name || !priceBdt) {
     return NextResponse.json({ error: 'Name and price required' }, { status: 400 })
   }
+
+  const featuresStr = Array.isArray(features) ? features.filter(Boolean).join('|') : ''
 
   const slug = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').slice(0, 80)
   let uniqueSlug = slug
@@ -97,7 +99,7 @@ export async function POST(req: Request) {
       isActive: isActive !== false,
       i18n: {
         create: [
-          { locale: 'en', name, description: description || '', shortDescription: (description || '').slice(0, 150) },
+          { locale: 'en', name, description: description || '', shortDescription: featuresStr },
           { locale: 'bn', name, description: description || '' },
         ],
       },

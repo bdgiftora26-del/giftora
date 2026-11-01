@@ -42,7 +42,9 @@ export default async function ProductPage({
   if (!product || !product.isActive) notFound()
 
   const name = product.i18n[0]?.name || product.slug
-  const description = product.i18n[0]?.description || product.i18n[0]?.shortDescription || ''
+  const description = product.i18n[0]?.description || ''
+  const featuresStr = product.i18n[0]?.shortDescription || ''
+  const features = featuresStr ? featuresStr.split('|').filter(Boolean) : []
   const price = product.salePriceBdt ? toNumber(product.salePriceBdt) : toNumber(product.priceBdt)
 
   // Breadcrumb from first category
@@ -165,6 +167,15 @@ export default async function ProductPage({
               </span>
             )}
           </div>
+          {features.length > 0 && (
+            <div className="product-features">
+              <ul>
+                {features.map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="product-info-row">
             <span className="product-info-label">Stock:</span>
             <span>
