@@ -1,17 +1,36 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { toNumber } from '@/lib/money'
+import { cached, cacheKey } from '@/lib/cache'
+import { tag, TTL as CACHE_TTL } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
+// Public product list (used by category pages via CategoryProductsClient).
+// Cached per (category, city, sort, page) tuple. Tags:
+//   - `products`           → any product mutation busts every list
+//   - `category:<slug>`    → that category's tree change busts its list
+//   - `category-page`      → any category mutation busts all category lists
+// First visitor warms; everyone else gets ~5ms. Admin mutations call
+// bustProduct()/bustCategory() which drop these entries instantly.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
-  const category = searchParams.get('category')
-  const city = searchParams.get('city')
+  const category = searchParams.get('category') || ''
+  const city = searchParams.get('city') || ''
   const sort = searchParams.get('sort') || 'default'
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1)
   const perPage = 48
 
+  const key = cacheKey('products', { category, city, sort, page, perPage })
+  const tags = [tag.products(), tag.categoryPage(), ...(category ? [tag.categorySlug(category)] : [])]
+
+  const payload = await cached(key, tags, CACHE_TTL.PRODUCT_LIST, () =>
+    loadProducts({ category, sort, page, perPage }),
+  )
+  return NextResponse.json(payload)
+}
+
+async function loadProducts({ category, sort, page, perPage }: { category: string; sort: string; page: number; perPage: number }) {
   let categoryIds: number[] = []
   if (category) {
     const cat = await db.category.findFirst({ where: { slug: category } })
@@ -53,7 +72,7 @@ export async function GET(req: Request) {
     }),
   ])
 
-  return NextResponse.json({
+  return {
     total,
     page,
     perPage,
@@ -69,5 +88,5 @@ export async function GET(req: Request) {
       firstSoldYear: p.firstSoldYear,
       shortDescription: p.i18n[0]?.shortDescription,
     })),
-  })
+  }
 }

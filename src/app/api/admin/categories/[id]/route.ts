@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAdminSession } from '@/lib/admin-auth'
+import { bustCategory } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +28,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   await db.category.update({ where: { id: Number(id) }, data: update })
+
+  // Bust cache: fetch slug + parent slug so we target this category + its parent.
+  const fresh = await db.category.findUnique({
+    where: { id: Number(id) },
+    select: { slug: true, parentId: true },
+  })
+  let parentSlug: string | undefined
+  if (fresh?.parentId) {
+    const p = await db.category.findUnique({ where: { id: fresh.parentId }, select: { slug: true } })
+    parentSlug = p?.slug
+  }
+  bustCategory(fresh?.slug, parentSlug)
   return NextResponse.json({ ok: true })
 }
 
@@ -37,6 +50,17 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const catId = Number(id)
+
+  // Capture slug + parent before delete so we can bust precisely.
+  const existing = await db.category.findUnique({
+    where: { id: catId },
+    select: { slug: true, parentId: true },
+  })
+  let parentSlug: string | undefined
+  if (existing?.parentId) {
+    const p = await db.category.findUnique({ where: { id: existing.parentId }, select: { slug: true } })
+    parentSlug = p?.slug
+  }
 
   // Check for children
   const children = await db.category.findMany({ where: { parentId: catId } })
@@ -49,5 +73,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   await db.categoryI18n.deleteMany({ where: { categoryId: catId } })
   await db.category.delete({ where: { id: catId } }).catch(() => {})
 
+  bustCategory(existing?.slug, parentSlug)
   return NextResponse.json({ ok: true })
 }

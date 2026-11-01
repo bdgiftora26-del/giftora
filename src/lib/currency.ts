@@ -3,22 +3,23 @@
 import { db } from '@/lib/db'
 import { toNumber } from '@/lib/money'
 import type { CurrencyInfo } from '@/lib/money'
+import { cached } from '@/lib/cache'
+import { tag, bustCurrencies } from '@/lib/cache-tags'
 
-const cache: { data: CurrencyInfo[] | null; ts: number } = { data: null, ts: 0 }
-const TTL = 60_000 // 1 min in-memory cache
+// Re-export so callers (e.g. admin currency mutation handlers) can bust the
+// cache after a rate update.
+export { bustCurrencies }
 
 export async function getCurrencies(): Promise<CurrencyInfo[]> {
-  if (cache.data && Date.now() - cache.ts < TTL) return cache.data
-  const rows = await db.currency.findMany({ where: { isActive: true } })
-  const data: CurrencyInfo[] = rows.map((r) => ({
-    code: r.code,
-    symbol: r.symbol,
-    name: r.name,
-    rateFromBdt: toNumber(r.rateFromBdt),
-  }))
-  cache.data = data
-  cache.ts = Date.now()
-  return data
+  return cached('currencies', [tag.currencies()], 5 * 60_000, async () => {
+    const rows = await db.currency.findMany({ where: { isActive: true } })
+    return rows.map((r) => ({
+      code: r.code,
+      symbol: r.symbol,
+      name: r.name,
+      rateFromBdt: toNumber(r.rateFromBdt),
+    }))
+  })
 }
 
 export async function getCurrency(code: string): Promise<CurrencyInfo> {

@@ -1,19 +1,26 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { cached, cacheKey } from '@/lib/cache'
+import { tag, TTL as CACHE_TTL } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
-// All home page data in ONE API call (client fetches this)
-// In-memory cache: 5min TTL (reduces DB hits across requests within same instance).
-// Home page content changes infrequently, so a longer TTL keeps the page snappy.
-let cache: { ts: number; data: any } | null = null
-const TTL = 5 * 60_000
-
+// All home page data in ONE API call (client fetches this).
+// Cached with tag `home` (15 min TTL). Invalidation:
+//   - product/category/banner mutation → bustProduct/bustCategory/bustBanner
+//     all include the `home` tag, so the next visitor re-warms this slice.
+// The first visitor after a bust pays the DB cost; everyone else gets ~5ms.
 export async function GET() {
-  if (cache && Date.now() - cache.ts < TTL) {
-    return NextResponse.json(cache.data)
-  }
+  const data = await cached(
+    cacheKey('home-data', { locale: 'en' }),
+    [tag.home()],
+    CACHE_TTL.HOME,
+    buildHomeData,
+  )
+  return NextResponse.json(data)
+}
 
+async function buildHomeData() {
   const LOCALE = 'en'
 
   // Step 1: All categories in ONE query
@@ -105,6 +112,5 @@ export async function GET() {
     },
   }
 
-  cache = { ts: Date.now(), data }
-  return NextResponse.json(data)
+  return data
 }

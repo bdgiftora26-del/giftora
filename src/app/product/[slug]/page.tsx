@@ -7,9 +7,10 @@ import { ProductCard, type ProductCardData } from '@/components/product/ProductC
 import { AddToBasket, type VariantData, type AddOnProduct } from '@/components/product/AddToBasket'
 
 import { toNumber } from '@/lib/money'
+import { cached } from '@/lib/cache'
+import { tag, TTL as CACHE_TTL } from '@/lib/cache-tags'
 import type { Metadata } from 'next'
 
-export const revalidate = 600
 export const dynamic = 'force-dynamic'
 const LOCALE = 'en'
 
@@ -20,26 +21,57 @@ export const metadata: Metadata = {
   description: 'Send gifts to Bangladesh. Serving since 2004.',
 }
 
+// All DB work for this page, cached per-slug (30 min). Invalidation:
+//   - product PATCH/DELETE for this slug → bustProduct(slug) drops it.
+//   - any product mutation → bustProduct() drops `products` tag (not this one,
+//     but cross-sell/add-ons are shared product data so we include `products`).
+type ProductDetail = Awaited<ReturnType<typeof loadProductDetail>>
+async function loadProductDetail(slug: string) {
+  const product = await db.product.findUnique({
+    where: { slug },
+    include: {
+      i18n: { where: { locale: LOCALE } },
+      images: { orderBy: { sortOrder: 'asc' } },
+      variants: true,
+      categories: { include: { category: { include: { i18n: true } } } },
+      relatedFrom: { include: { to: { include: { i18n: { where: { locale: LOCALE } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } } } } },
+    },
+  })
+  if (!product || !product.isActive) return null
+
+  const catIds = product.categories.map((c) => c.categoryId)
+  const [sameCatProducts, addOnProducts] = await Promise.all([
+    db.product.findMany({
+      where: { isActive: true, id: { not: product.id }, categories: { some: { categoryId: { in: catIds } } } },
+      select: { id: true, slug: true, priceBdt: true, salePriceBdt: true, orderCount: true, firstSoldYear: true, i18n: { where: { locale: LOCALE }, select: { name: true } }, images: { take: 1, orderBy: { sortOrder: 'asc' }, select: { url: true } } },
+      orderBy: { orderCount: 'desc' }, take: 4,
+    }),
+    db.product.findMany({
+      where: { sku: { startsWith: "ADD-" }, isActive: true },
+      select: { id: true, slug: true, priceBdt: true, i18n: { where: { locale: LOCALE }, select: { name: true } } },
+      orderBy: { sku: "asc" },
+    }),
+  ])
+  return { product, sameCatProducts, addOnProducts }
+}
+
 export default async function ProductPage({
   params,
 }: {
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
+
+  const result = await cached(
+    `product:${slug}`,
+    [tag.product(slug), tag.products()],
+    CACHE_TTL.PRODUCT_DETAIL,
+    () => loadProductDetail(slug),
+  )
+  if (!result) notFound()
+
+  const { product, sameCatProducts, addOnProducts } = result
   const locale = LOCALE
-
-  const product = await db.product.findUnique({
-    where: { slug },
-    include: {
-      i18n: { where: { locale } },
-      images: { orderBy: { sortOrder: 'asc' } },
-      variants: true,
-      categories: { include: { category: { include: { i18n: true } } } },
-      relatedFrom: { include: { to: { include: { i18n: { where: { locale } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } } } } },
-    },
-  })
-
-  if (!product || !product.isActive) notFound()
 
   const name = product.i18n[0]?.name || product.slug
   const description = product.i18n[0]?.description || ''
@@ -69,47 +101,17 @@ export default async function ProductPage({
     stockQty: v.stockQty,
   }))
 
-  const related: ProductCardData[] = product.relatedFrom
-    .map((r) => r.to)
-    .slice(0, 4)
-    .map((p) => ({
-      id: p.id,
-      slug: p.slug,
-      name: p.i18n[0]?.name || p.slug,
-      priceBdt: toNumber(p.priceBdt),
-      salePriceBdt: p.salePriceBdt ? toNumber(p.salePriceBdt) : null,
-      image: p.images[0]?.url || '/placeholders/products/generic-01.svg',
-      orderCount: p.orderCount,
-      firstSoldYear: p.firstSoldYear,
-    }))
-
-  // Fetch cross-sell + add-ons IN PARALLEL
-  let crossSell: ProductCardData[] = []
-  let alsoBought: ProductCardData[] = []
-  let addOns: { id: number; slug: string; name: string; priceBdt: number }[] = []
-  try {
-    const catIds = product.categories.map((c) => c.categoryId)
-    const [sameCatProducts, addOnProducts] = await Promise.all([
-      db.product.findMany({
-        where: { isActive: true, id: { not: product.id }, categories: { some: { categoryId: { in: catIds } } } },
-        select: { id: true, slug: true, priceBdt: true, salePriceBdt: true, orderCount: true, firstSoldYear: true, i18n: { where: { locale }, select: { name: true } }, images: { take: 1, orderBy: { sortOrder: 'asc' }, select: { url: true } } },
-        orderBy: { orderCount: 'desc' }, take: 4,
-      }),
-      db.product.findMany({
-        where: { sku: { startsWith: "ADD-" }, isActive: true },
-        select: { id: true, slug: true, priceBdt: true, i18n: { where: { locale }, select: { name: true } } },
-        orderBy: { sku: "asc" },
-      }),
-    ])
-    crossSell = sameCatProducts.map((p) => ({
-      id: p.id, slug: p.slug, name: p.i18n[0]?.name || p.slug,
-      priceBdt: toNumber(p.priceBdt), salePriceBdt: p.salePriceBdt ? toNumber(p.salePriceBdt) : null,
-      image: p.images[0]?.url || '/placeholders/products/generic-01.svg',
-      orderCount: p.orderCount, firstSoldYear: p.firstSoldYear,
-    }))
-    alsoBought = related.length > 0 ? related : crossSell.slice().reverse()
-    addOns = addOnProducts.map((p) => ({ id: p.id, slug: p.slug, name: p.i18n[0]?.name || p.slug, priceBdt: toNumber(p.priceBdt) }))
-  } catch {}
+  // Cross-sell + add-ons are loaded inside the cached loader (no extra DB hits
+  // here). `sameCatProducts` → crossSell, `addOnProducts` → addOns.
+  const crossSell: ProductCardData[] = sameCatProducts.map((p) => ({
+    id: p.id, slug: p.slug, name: p.i18n[0]?.name || p.slug,
+    priceBdt: toNumber(p.priceBdt), salePriceBdt: p.salePriceBdt ? toNumber(p.salePriceBdt) : null,
+    image: p.images[0]?.url || '/placeholders/products/generic-01.svg',
+    orderCount: p.orderCount, firstSoldYear: p.firstSoldYear,
+  }))
+  const addOns: AddOnProduct[] = addOnProducts.map((p) => ({
+    id: p.id, slug: p.slug, name: p.i18n[0]?.name || p.slug, priceBdt: toNumber(p.priceBdt),
+  }))
 
   const jsonLd = {
     '@context': 'https://schema.org',

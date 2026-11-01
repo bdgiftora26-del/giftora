@@ -5,12 +5,17 @@ import { allSettledFallback } from '@/lib/db-resilient'
 import { toNumber } from '@/lib/money'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { AdminLogoutButton } from '@/components/admin/AdminLogoutButton'
+import { cached } from '@/lib/cache'
+import { tag, TTL as CACHE_TTL } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminDashboard() {
-  await requireAdminSession()
-
+// Dashboard stats are expensive (8 queries). Cache the aggregate snapshot
+// under `admin:dashboard` (5 min). Invalidation:
+//   - order status change → bustOrder() includes admin:dashboard
+//   - product create/update/delete → bustProduct() includes admin:dashboard
+// So the dashboard refreshes within one request of any admin change.
+async function loadDashboard() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const [ordersToday, totalRevenue, pendingPayment, awaitingPayment, lowStock, totalProducts, totalOrders, recentOrders] = (await allSettledFallback([
@@ -26,6 +31,14 @@ export default async function AdminDashboard() {
       fallback: [] as any,
     },
   ])) as any
+  return { ordersToday, totalRevenue, pendingPayment, awaitingPayment, lowStock, totalProducts, totalOrders, recentOrders }
+}
+
+export default async function AdminDashboard() {
+  await requireAdminSession()
+
+  const { ordersToday, totalRevenue, pendingPayment, awaitingPayment, lowStock, totalProducts, totalOrders, recentOrders } =
+    await cached('admin:dashboard', [tag.adminDashboard()], CACHE_TTL.ADMIN_DASHBOARD, loadDashboard)
 
   return (
     <AdminShell>

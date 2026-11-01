@@ -2,16 +2,23 @@ import Link from 'next/link'
 import { requireAdminSession } from '@/lib/admin-auth'
 import { db } from '@/lib/db'
 import { AdminShell } from '@/components/admin/AdminShell'
+import { cached } from '@/lib/cache'
+import { tag, TTL as CACHE_TTL } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminBannersPage() {
   await requireAdminSession()
 
-  const [mosaic, tiles] = await Promise.all([
-    db.banner.findMany({ where: { placement: 'HOME_MOSAIC' }, orderBy: { sortOrder: 'asc' } }),
-    db.banner.findMany({ where: { placement: 'HOME_TILES' }, orderBy: { sortOrder: 'asc' } }),
-  ])
+  // Cached under admin:banners. Invalidation: banner create/update/delete →
+  // bustBanner() drops admin:banners, so this re-fetches on next visit.
+  const { mosaic, tiles } = await cached('admin:banners:page', [tag.adminBanners(), tag.banners()], CACHE_TTL.ADMIN_BANNERS, async () => {
+    const [mosaic, tiles] = await Promise.all([
+      db.banner.findMany({ where: { placement: 'HOME_MOSAIC' }, orderBy: { sortOrder: 'asc' } }),
+      db.banner.findMany({ where: { placement: 'HOME_TILES' }, orderBy: { sortOrder: 'asc' } }),
+    ])
+    return { mosaic, tiles }
+  })
 
   return (
     <AdminShell>

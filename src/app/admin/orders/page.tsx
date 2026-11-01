@@ -5,6 +5,8 @@ import { toNumber } from '@/lib/money'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { OrderStatusChanger } from './OrderStatusChanger'
 import { OrderViewModal } from './OrderViewModal'
+import { cached, cacheKey } from '@/lib/cache'
+import { tag, TTL as CACHE_TTL } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,24 +22,13 @@ export default async function AdminOrdersPage({
   const sp = await searchParams
   const statusFilter = sp.status && (STATUSES as readonly string[]).includes(sp.status) ? sp.status : undefined
   const page = Math.max(1, parseInt(sp.page || '1', 10) || 1)
-  const PER_PAGE = 15
 
-  const where = statusFilter ? { status: statusFilter as (typeof STATUSES)[number] } : undefined
-  const [total, orders] = await Promise.all([
-    db.order.count({ where }),
-    db.order.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * PER_PAGE,
-      take: PER_PAGE,
-      select: {
-        id: true, orderNo: true, status: true, totalBdt: true, createdAt: true,
-        invFirstName: true, invLastName: true, invEmail: true,
-        delivery: { select: { recipientName: true, recipientPhone: true, city: { select: { name: true } } } },
-      },
-    }),
-  ])
-  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
+  // Cached per (status, page). Invalidation: order status change → bustOrder()
+  // drops admin:orders, so the next load re-fetches fresh counts/rows.
+  const key = cacheKey('admin:orders', { status: statusFilter || '', page })
+  const { total, orders, totalPages } = await cached(key, [tag.adminOrders()], CACHE_TTL.ORDER_LIST, () =>
+    loadOrders(statusFilter, page),
+  )
 
   return (
     <AdminShell>
@@ -109,4 +100,24 @@ export default async function AdminOrdersPage({
       </div>
     </AdminShell>
   )
+}
+
+async function loadOrders(statusFilter: string | undefined, page: number) {
+  const PER_PAGE = 15
+  const where = statusFilter ? { status: statusFilter as (typeof STATUSES)[number] } : undefined
+  const [total, orders] = await Promise.all([
+    db.order.count({ where }),
+    db.order.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * PER_PAGE,
+      take: PER_PAGE,
+      select: {
+        id: true, orderNo: true, status: true, totalBdt: true, createdAt: true,
+        invFirstName: true, invLastName: true, invEmail: true,
+        delivery: { select: { recipientName: true, recipientPhone: true, city: { select: { name: true } } } },
+      },
+    }),
+  ])
+  return { total, orders, totalPages: Math.max(1, Math.ceil(total / PER_PAGE)) }
 }

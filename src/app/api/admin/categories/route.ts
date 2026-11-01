@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAdminSession } from '@/lib/admin-auth'
+import { cached } from '@/lib/cache'
+import { tag, TTL as CACHE_TTL, bustCategory } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
-// List all categories (admin — full tree)
+// List all categories (admin — full tree). Cached under `admin:categories`.
 export async function GET() {
   const isAdmin = await getAdminSession()
   if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const payload = await cached('admin:categories', [tag.adminCategories()], CACHE_TTL.ADMIN_CATEGORIES, loadAdminCategories)
+  return NextResponse.json(payload)
+}
+
+async function loadAdminCategories() {
   const categories = await db.category.findMany({
     where: { parentId: null, isActive: true },
     orderBy: { sortOrder: 'asc' },
@@ -25,7 +32,7 @@ export async function GET() {
     },
   })
 
-  return NextResponse.json({
+  return {
     categories: categories.map((c) => ({
       id: c.id,
       slug: c.slug,
@@ -43,7 +50,7 @@ export async function GET() {
         sortOrder: ch.sortOrder,
       })),
     })),
-  })
+  }
 }
 
 // Create new category
@@ -82,5 +89,13 @@ export async function POST(req: Request) {
     },
   })
 
+  // Bust cache: new category affects home sidebar, public category list, all
+  // category pages (tree changed), and the admin tree.
+  let parentSlug: string | undefined
+  if (parentId) {
+    const p = await db.category.findUnique({ where: { id: parentId }, select: { slug: true } })
+    parentSlug = p?.slug
+  }
+  bustCategory(uniqueSlug, parentSlug)
   return NextResponse.json({ ok: true, id: category.id, slug: uniqueSlug })
 }

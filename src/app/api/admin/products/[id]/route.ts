@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAdminSession } from '@/lib/admin-auth'
+import { bustProduct } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
@@ -95,6 +96,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
+  // Bust cache: gather the product's slug + its category slugs so only the
+  // affected slices drop (home page, this product's detail, its category pages,
+  // admin product list, dashboard).
+  const fresh = await db.product.findUnique({
+    where: { id: Number(id) },
+    select: { slug: true, categories: { include: { category: { select: { slug: true } } } } },
+  })
+  const slug = fresh?.slug
+  const catSlugs = (fresh?.categories || []).map((c) => c.category.slug)
+  bustProduct(slug, catSlugs)
   return NextResponse.json({ ok: true })
 }
 
@@ -104,6 +115,14 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+  // Capture slug + category slugs before delete so we can bust precisely.
+  const existing = await db.product.findUnique({
+    where: { id: Number(id) },
+    select: { slug: true, categories: { include: { category: { select: { slug: true } } } } },
+  })
   await db.product.delete({ where: { id: Number(id) } }).catch(() => {})
+  if (existing) {
+    bustProduct(existing.slug, existing.categories.map((c) => c.category.slug))
+  }
   return NextResponse.json({ ok: true })
 }

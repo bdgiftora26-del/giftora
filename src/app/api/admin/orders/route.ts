@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAdminSession } from '@/lib/admin-auth'
+import { bustOrder } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,5 +43,7 @@ export async function PATCH(req: Request) {
     })
   }
 
+  // Bust cache: admin orders list + dashboard stats (counts/sums by status).
+  bustOrder()
   return NextResponse.json({ ok: true, status: order.status })
 }

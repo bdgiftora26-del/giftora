@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAdminSession } from '@/lib/admin-auth'
+import { cached, cacheKey } from '@/lib/cache'
+import { tag, TTL as CACHE_TTL, bustProduct } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
-// List products with server-side pagination (only fetch 15 at a time)
+// List products with server-side pagination (cached per page+query).
 export async function GET(req: Request) {
   const isAdmin = await getAdminSession()
   if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -12,8 +14,16 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1)
   const q = searchParams.get('q') || ''
-  const PER_PAGE = 15
 
+  const key = cacheKey('admin:products', { page, q })
+  const payload = await cached(key, [tag.adminProducts()], CACHE_TTL.ADMIN_PRODUCTS, () =>
+    loadAdminProducts(page, q),
+  )
+  return NextResponse.json(payload)
+}
+
+async function loadAdminProducts(page: number, q: string) {
+  const PER_PAGE = 15
   // Build where clause for search
   const where = q
     ? {
@@ -26,7 +36,6 @@ export async function GET(req: Request) {
       }
     : { isActive: true }
 
-  // Fetch only the current page + total count (2 fast queries)
   const [total, products] = await Promise.all([
     db.product.count({ where }),
     db.product.findMany({
@@ -43,7 +52,7 @@ export async function GET(req: Request) {
     }),
   ])
 
-  return NextResponse.json({
+  return {
     products: products.map((p) => ({
       id: p.id,
       sku: p.sku,
@@ -58,7 +67,7 @@ export async function GET(req: Request) {
     total,
     page,
     totalPages: Math.max(1, Math.ceil(total / PER_PAGE)),
-  })
+  }
 }
 
 // Create new product
@@ -108,5 +117,7 @@ export async function POST(req: Request) {
     },
   })
 
+  // Bust cache: new product affects home, public lists, admin lists, dashboard.
+  bustProduct(uniqueSlug, categorySlug ? [categorySlug] : [])
   return NextResponse.json({ ok: true, id: product.id, slug: uniqueSlug })
 }

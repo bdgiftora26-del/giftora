@@ -1,5 +1,7 @@
 import { db } from '@/lib/db'
 import { withRetry } from '@/lib/db-resilient'
+import { cached } from '@/lib/cache'
+import { tag, TTL } from '@/lib/cache-tags'
 
 export type SidebarCategory = {
   id: number
@@ -11,29 +13,33 @@ export type SidebarCategory = {
 }
 
 // Top-level categories for the sidebar, in sortOrder, with i18n name (fallback en).
+// Cached under `category` tag (15 min). Invalidation: bustCategory() drops it.
 // Wrapped in withRetry so transient DB hiccups don't crash the whole page.
 export async function getSidebarCategories(locale: string = 'en'): Promise<SidebarCategory[]> {
-  try {
-    const rows = await withRetry(() =>
-      db.category.findMany({
-        where: { parentId: null, showInSidebar: true, isActive: true },
-        orderBy: { sortOrder: 'asc' },
-        include: { i18n: true },
-      }),
-    )
-    return rows.map((c) => {
-      const i18n = c.i18n.find((i) => i.locale === locale) || c.i18n.find((i) => i.locale === 'en')
-      return {
-        id: c.id,
-        slug: c.slug,
-        name: i18n?.name || c.slug,
-        icon: c.icon,
-        href: `/${c.slug}`,
-        isActive: c.isActive,
-      }
-    })
-  } catch {
-    // If sidebar can't load, return empty rather than crashing the page
-    return []
-  }
+  const key = `sidebar:${locale}`
+  return cached(key, [tag.category()], TTL.CATEGORY_LIST, async () => {
+    try {
+      const rows = await withRetry(() =>
+        db.category.findMany({
+          where: { parentId: null, showInSidebar: true, isActive: true },
+          orderBy: { sortOrder: 'asc' },
+          include: { i18n: true },
+        }),
+      )
+      return rows.map((c) => {
+        const i18n = c.i18n.find((i) => i.locale === locale) || c.i18n.find((i) => i.locale === 'en')
+        return {
+          id: c.id,
+          slug: c.slug,
+          name: i18n?.name || c.slug,
+          icon: c.icon,
+          href: `/${c.slug}`,
+          isActive: c.isActive,
+        }
+      })
+    } catch {
+      // If sidebar can't load, return empty rather than crashing the page
+      return []
+    }
+  })
 }
