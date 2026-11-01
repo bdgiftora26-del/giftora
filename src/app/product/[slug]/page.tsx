@@ -83,17 +83,24 @@ export default async function ProductPage({
       firstSoldYear: p.firstSoldYear,
     }))
 
-  // Fetch cross-sell products (same category, excluding current)
+  // Fetch cross-sell + add-ons IN PARALLEL
   let crossSell: ProductCardData[] = []
   let alsoBought: ProductCardData[] = []
+  let addOns: { id: number; slug: string; name: string; priceBdt: number }[] = []
   try {
     const catIds = product.categories.map((c) => c.categoryId)
-    const sameCatProducts = await db.product.findMany({
-      where: { isActive: true, id: { not: product.id }, categories: { some: { categoryId: { in: catIds } } } },
-      include: { i18n: { where: { locale } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
-      orderBy: { orderCount: 'desc' },
-      take: 4,
-    })
+    const [sameCatProducts, addOnProducts] = await Promise.all([
+      db.product.findMany({
+        where: { isActive: true, id: { not: product.id }, categories: { some: { categoryId: { in: catIds } } } },
+        select: { id: true, slug: true, priceBdt: true, salePriceBdt: true, orderCount: true, firstSoldYear: true, i18n: { where: { locale }, select: { name: true } }, images: { take: 1, orderBy: { sortOrder: 'asc' }, select: { url: true } } },
+        orderBy: { orderCount: 'desc' }, take: 4,
+      }),
+      db.product.findMany({
+        where: { sku: { startsWith: "ADD-" }, isActive: true },
+        select: { id: true, slug: true, priceBdt: true, i18n: { where: { locale }, select: { name: true } } },
+        orderBy: { sku: "asc" },
+      }),
+    ])
     crossSell = sameCatProducts.map((p) => ({
       id: p.id, slug: p.slug, name: p.i18n[0]?.name || p.slug,
       priceBdt: toNumber(p.priceBdt), salePriceBdt: p.salePriceBdt ? toNumber(p.salePriceBdt) : null,
@@ -101,15 +108,6 @@ export default async function ProductPage({
       orderCount: p.orderCount, firstSoldYear: p.firstSoldYear,
     }))
     alsoBought = related.length > 0 ? related : crossSell.slice().reverse()
-  } catch {}
-
-  let addOns: { id: number; slug: string; name: string; priceBdt: number }[] = []
-  try {
-    const addOnProducts = await db.product.findMany({
-      where: { sku: { startsWith: "ADD-" }, isActive: true },
-      select: { id: true, slug: true, priceBdt: true, i18n: { where: { locale }, select: { name: true } } },
-      orderBy: { sku: "asc" },
-    })
     addOns = addOnProducts.map((p) => ({ id: p.id, slug: p.slug, name: p.i18n[0]?.name || p.slug, priceBdt: toNumber(p.priceBdt) }))
   } catch {}
 
