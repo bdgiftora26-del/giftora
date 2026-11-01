@@ -501,33 +501,6 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
 .privacy-check input { margin-top: 2px; }
 .submit-row { text-align: right; margin-top: 16px; }
 
-/* ---------------- Footer (dark red) ---------------- */
-.site-footer { background: var(--c-brand-red-dark); color: #fff; margin-top: auto; }
-.footer-payments { background: #fff; padding: 10px; border-bottom: 1px solid var(--c-line); }
-.footer-payments-inner { max-width: var(--content-width); margin: 0 auto; text-align: center; }
-.footer-payments-inner img { margin: 0 auto; max-width: 100%; }
-.footer-main { padding: 24px 0 16px; }
-.footer-main-inner {
-  max-width: var(--content-width); margin: 0 auto; padding: 0 16px;
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px;
-}
-.footer-col-title { color: #fff; font-size: 13px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; }
-.footer-col-list { list-style: none; margin: 0; padding: 0; }
-.footer-col-list li { margin-bottom: 5px; }
-.footer-col-list a { color: #ffd6d6; font-size: 12px; text-decoration: none; }
-.footer-col-list a:hover { color: #fff; text-decoration: underline; }
-.footer-contact-line { color: #ffd6d6; font-size: 12px; margin: 4px 0; }
-.footer-socials { display: flex; gap: 6px; margin-top: 8px; }
-.footer-social {
-  width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.15);
-  color: #fff; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
-}
-.footer-social:hover { background: var(--c-brand-red); text-decoration: none; }
-.footer-bottom { background: rgba(0,0,0,0.25); padding: 12px 0; }
-.footer-bottom-inner { max-width: var(--content-width); margin: 0 auto; padding: 0 16px; text-align: center; }
-.footer-bottom-inner p { margin: 2px 0; font-size: 11px; color: #ffd6d6; }
-.footer-legal { font-size: 10px; opacity: 0.7; }
-
 /* ---------------- Floating discount + chat ---------------- */
 .discount-tab {
   position: fixed; right: 0; top: 50%; transform: translateY(-50%) rotate(180deg);
@@ -1115,3 +1088,179 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
 .home-section-4 .product-grid {
   grid-template-columns: repeat(4, 1fr);
 }
+
+/* ---------------- Footer (bdgiftora.com style) ---------------- */
+.site-footer {
+  background: var(--c-brand-red);
+  color: #fff;
+  margin-top: auto;
+}
+
+/* Top nav bar */
+.footer-topnav {
+  background: rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+}
+.footer-topnav-inner {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 0 16px;
+  text-align: center;
+  font-size: 12px;
+}
+.footer-topnav-inner a {
+  color: #fff;
+  text-decoration: none;
+  padding: 0 4px;
+}
+.footer-topnav-inner a:hover { text-decoration: underline; }
+.footer-topnav-sep { color: rgba(255, 255, 255, 0.4); }
+
+/* Payment + social row */
+.footer-pay-social {
+  background: var(--c-brand-red-dark);
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.footer-pay-social-inner {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.footer-socials {
+  display: flex;
+  gap: 8px;
+}
+.footer-social {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.footer-social:hover {
+  background: #fff;
+  color: var(--c-brand-red);
+  text-decoration: none;
+}
+.footer-payments-logos {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.pay-logo {
+  background: #fff;
+  color: #333;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Category link columns */
+.footer-links-section {
+  padding: 16px 0;
+}
+.footer-links-inner {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 0 16px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+.footer-link-col {
+  /* no title — just links */
+}
+.footer-link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.footer-link-list li {
+  margin-bottom: 4px;
+}
+.footer-link-list a {
+  color: #fff;
+  font-size: 11.5px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.footer-link-list a:hover {
+  text-decoration: underline;
+}
+.footer-arrow {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+}
+
+/* Copyright */
+.footer-copyright {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 0;
+  text-align: center;
+}
+.footer-copyright p {
+  margin: 0;
+  font-size: 12px;
+  color: #fff;
+}
+.footer-cynlex-link {
+  color: #fff;
+  text-decoration: underline;
+  font-weight: 600;
+}
+.footer-cynlex-link:hover {
+  color: #ffcc00;
+}
+
+@media (max-width: 768px) {
+  .footer-links-inner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .footer-pay-social-inner {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+@media (max-width: 480px) {
+  .footer-links-inner {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Payment logo styles */
+.pay-logo {
+  background: #fff;
+  color: #333;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.pay-visa { color: #1a1f71; font-style: italic; }
+.pay-amex { color: #006fcf; }
+.pay-paypal { color: #003087; }
+.pay-disc { color: #ff6000; }
+.pay-bkash { color: #e2136e; }
+.pay-mc { padding: 4px 6px; }
