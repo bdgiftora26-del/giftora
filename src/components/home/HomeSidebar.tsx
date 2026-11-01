@@ -3,16 +3,8 @@ import { getSidebarCategories, type SidebarCategory } from '@/lib/catalog'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { toNumber } from '@/lib/money'
 
-// Cache sidebar data for 60s to avoid repeated DB hits
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sidebarCache: { ts: number; data: any } = { ts: 0, data: null }
-const CACHE_TTL = 60_000
-
-// Server component — fetches all sidebar data for the home page (cached)
+// Server component — fetches all sidebar data for the home page (no cache = real-time)
 export async function HomeSidebar() {
-  if (sidebarCache.data && Date.now() - sidebarCache.ts < CACHE_TTL) {
-    return <Sidebar categories={sidebarCache.data.categories} widgets={sidebarCache.data.widgets} />
-  }
 
   const categories: SidebarCategory[] = await getSidebarCategories('en').catch(() => [])
 
@@ -68,9 +60,6 @@ export async function HomeSidebar() {
       { title: 'Valentine\'s Day Romantic Gifts for Everyone in Bangladesh', slug: 'valentines-day-gift-packages' },
     ],
   }
-
-  sidebarCache.ts = Date.now()
-  sidebarCache.data = { categories, widgets }
 
   return <Sidebar categories={categories} widgets={widgets} />
 }
