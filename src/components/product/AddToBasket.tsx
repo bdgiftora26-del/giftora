@@ -59,20 +59,18 @@ export function AddToBasket({
       {addOns.length > 0 && (
         <div className="product-addons-section">
           <div className="product-addons-title">Make It Extra Special With:</div>
-          <div className="product-addons-grid">
-            {addOns.map((a) => (
-              <label key={a.id} className={`product-addon-card ${selectedAddOns.has(a.id) ? 'selected' : ''}`}>
+          <div className="product-addons-list">
+            {addOns.slice(0, 10).map((a) => (
+              <label key={a.id} className={`product-addon-item ${selectedAddOns.has(a.id) ? 'selected' : ''}`}>
                 <input
                   type="checkbox"
                   checked={selectedAddOns.has(a.id)}
                   onChange={() => toggleAddOn(a.id)}
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/placeholders/products/generic-01.svg`} alt={a.name} className="product-addon-card-img" />
-                <div className="product-addon-card-info">
-                  <div className="product-addon-card-name">{a.name}</div>
-                  <div className="product-addon-card-price">+ <Price bdt={a.priceBdt} /></div>
-                </div>
+                <img src={`/placeholders/products/generic-01.svg`} alt={a.name} className="product-addon-item-img" />
+                <span className="product-addon-item-name">{a.name}</span>
+                <span className="product-addon-item-price">+ <Price bdt={a.priceBdt} /></span>
               </label>
             ))}
           </div>
