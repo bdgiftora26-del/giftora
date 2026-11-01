@@ -1135,12 +1135,10 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   line-height: 1.6;
 }
 
-/* Product sections: alternating 3 and 4 columns */
-.home-section-3 .product-grid {
-  grid-template-columns: repeat(3, 1fr);
-}
-.home-section-4 .product-grid {
-  grid-template-columns: repeat(4, 1fr);
+/* Product sections: alternating 3 and 4 columns (desktop only) */
+@media (min-width: 769px) {
+  .home-section-3 .product-grid { grid-template-columns: repeat(3, 1fr); }
+  .home-section-4 .product-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* ---------------- Footer (bdgiftora.com style) ---------------- */
