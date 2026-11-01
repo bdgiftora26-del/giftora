@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ImageUpload } from '@/components/admin/ImageUpload'
 
 type ProductFormData = {
   id?: number
@@ -139,13 +140,15 @@ export function ProductEditModal({
           <p style={{ color: '#999', textAlign: 'center', padding: 40 }}>Loading...</p>
         ) : (
           <form onSubmit={save}>
-            {/* Image preview */}
-            {data.imageUrl && (
-              <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={data.imageUrl} alt="Preview" style={{ width: 120, height: 120, objectFit: 'contain', border: '1px solid #ddd', borderRadius: 4 }} />
-              </div>
-            )}
+            {/* Image upload */}
+            <div style={{ marginBottom: 16 }}>
+              <ImageUpload
+                value={data.imageUrl}
+                onChange={(url) => setData({ ...data, imageUrl: url })}
+                label="Product Image"
+                hint="JPG, PNG, WebP — max 5MB"
+              />
+            </div>
 
             <div className="admin-form-row">
               <label>Product Name *</label>
@@ -161,11 +164,6 @@ export function ProductEditModal({
                 <label style={{ width: 80 }}>Sale Price</label>
                 <input type="number" value={data.salePriceBdt} onChange={(e) => setData({ ...data, salePriceBdt: e.target.value })} placeholder="Optional" />
               </div>
-            </div>
-
-            <div className="admin-form-row">
-              <label>Image URL</label>
-              <input value={data.imageUrl} onChange={(e) => setData({ ...data, imageUrl: e.target.value })} placeholder="/products/photo.jpg" />
             </div>
 
             {isNew && (

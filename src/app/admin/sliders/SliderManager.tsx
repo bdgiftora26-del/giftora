@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { ImageUpload } from '@/components/admin/ImageUpload'
 
 type Banner = {
   id: number
@@ -127,20 +128,27 @@ function AddSlideForm({ onAdded }: { onAdded: () => void }) {
   return (
     <form onSubmit={submit} style={{ background: '#f9f9f9', padding: 16, marginBottom: 16, border: '1px solid var(--c-line)' }}>
       <h3 style={{ marginTop: 0 }}>Add Slider Slide</h3>
+      <div style={{ marginBottom: 12, padding: '8px 12px', background: '#fff3cd', border: '1px solid #ffeaa7', borderRadius: 4, fontSize: 12, color: '#856404' }}>
+        📐 <strong>Recommended image size: 1440 × 400 pixels</strong> (wide banner, landscape orientation)
+      </div>
       <div className="checkout-form-row">
         <label>Title *</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="5% OFF — Code: GIFT" />
       </div>
-      <div className="checkout-form-row">
-        <label>Image URL *</label>
-        <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} required placeholder="/products/promo1.jpg" />
+      <div style={{ marginBottom: 12 }}>
+        <ImageUpload
+          value={imageUrl}
+          onChange={setImageUrl}
+          label="Slider Image *"
+          hint="1440×400px — JPG, PNG, WebP — max 5MB"
+        />
       </div>
       <div className="checkout-form-row">
         <label>Link (optional)</label>
         <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="/saleitems" />
       </div>
       <div className="submit-row">
-        <button type="submit" className="btn-green" disabled={saving}>{saving ? 'Saving...' : 'Add Slide'}</button>
+        <button type="submit" className="btn-green" disabled={saving || !imageUrl}>{saving ? 'Saving...' : 'Add Slide'}</button>
       </div>
     </form>
   )
