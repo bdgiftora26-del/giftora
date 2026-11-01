@@ -5,7 +5,7 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { Price } from '@/components/Price'
 import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
 import { AddToBasket, type VariantData, type AddOnProduct } from '@/components/product/AddToBasket'
-import { ProductTabs } from '@/components/product/ProductTabs'
+
 import { toNumber } from '@/lib/money'
 import type { Metadata } from 'next'
 
@@ -196,12 +196,16 @@ export default async function ProductPage({
         </div>
       </div>
 
-      <ProductTabs
-        description={description}
-        productCode={product.sku}
-        crossSell={crossSell}
-        alsoBought={alsoBought}
-      />
+      {crossSell.length > 0 && (
+        <section className="product-section">
+          <h2 className="product-section-h2">Related Products</h2>
+          <div className="related-grid">
+            {crossSell.slice(0, 4).map((p) => (
+              <ProductCard key={p.id} p={p} />
+            ))}
+          </div>
+        </section>
+      )}
     </StorefrontShell>
   )
 }
