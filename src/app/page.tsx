@@ -23,7 +23,14 @@ async function fetchHomeData() {
   // Step 1: Get all category IDs in ONE query
   const allCats = await db.category.findMany({
     where: { parentId: null, isActive: true, showInSidebar: true },
-    select: { id: true, slug: true, icon: true, i18n: { where: { locale: LOCALE }, select: { name: true } }, children: { where: { isActive: true }, select: { id: true, slug: true, parentId: true, i18n: { where: { locale: LOCALE }, select: { name: true } } } },
+    select: {
+      id: true, slug: true, icon: true,
+      i18n: { where: { locale: LOCALE }, select: { name: true } },
+      children: {
+        where: { isActive: true },
+        select: { id: true, slug: true, parentId: true, i18n: { where: { locale: LOCALE }, select: { name: true } } },
+      },
+    },
     orderBy: { sortOrder: 'asc' },
   })
 
