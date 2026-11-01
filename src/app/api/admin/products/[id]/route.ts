@@ -43,7 +43,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const { id } = await params
   const body = await req.json()
-  const { name, priceBdt, salePriceBdt, description, imageUrl, isActive, isCake, features } = body
+  const { name, priceBdt, salePriceBdt, description, imageUrl, isActive, isCake, features, categorySlug } = body
 
   const update: any = {}
   if (priceBdt !== undefined) update.priceBdt = Number(priceBdt)
@@ -67,6 +67,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   await db.product.update({ where: { id: Number(id) }, data: update })
+
+  // Update category association
+  if (categorySlug !== undefined) {
+    // Remove old associations
+    await db.productCategory.deleteMany({ where: { productId: Number(id) } })
+    // Add new
+    if (categorySlug) {
+      const cat = await db.category.findFirst({ where: { slug: categorySlug } })
+      if (cat) {
+        await db.productCategory.create({ data: { productId: Number(id), categoryId: cat.id } })
+      }
+    }
+  }
 
   // Update image
   if (imageUrl !== undefined) {

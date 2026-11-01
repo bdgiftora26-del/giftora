@@ -5,6 +5,8 @@ import { X, Save, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 
+type Category = { id: number; slug: string; name: string; parentId: number | null; parentName?: string }
+
 type ProductFormData = {
   id?: number
   name: string
@@ -37,6 +39,24 @@ export function ProductEditModal({
   const [data, setData] = useState<ProductFormData>(EMPTY)
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+
+  // Load categories from API
+  useEffect(() => {
+    fetch('/api/admin/categories')
+      .then((r) => r.json())
+      .then((d) => {
+        const cats: Category[] = []
+        ;(d.categories || []).forEach((c: any) => {
+          cats.push({ id: c.id, slug: c.slug, name: c.name, parentId: null })
+          ;(c.children || []).forEach((ch: any) => {
+            cats.push({ id: ch.id, slug: ch.slug, name: ch.name, parentId: c.id, parentName: c.name })
+          })
+        })
+        setCategories(cats)
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (isNew) {
@@ -79,6 +99,7 @@ export function ProductEditModal({
       isActive: data.isActive,
       isCake: data.isCake,
       features: data.features.filter(Boolean),
+      categorySlug: data.categorySlug,
     }
 
     try {
@@ -86,12 +107,12 @@ export function ProductEditModal({
       if (isNew) {
         res = await fetch('/api/admin/products', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, categorySlug: data.categorySlug }),
+          body: JSON.stringify(payload),
         })
       } else {
         res = await fetch(`/api/admin/products/${productId}`, {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, categorySlug: data.categorySlug }),
         })
       }
       if (res.ok) {
@@ -117,40 +138,24 @@ export function ProductEditModal({
 
   return (
     <div
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-      }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
       onClick={onClose}
     >
       <div
-        style={{
-          background: '#fff', borderRadius: 8, maxWidth: 600, width: '100%',
-          maxHeight: '85vh', overflowY: 'auto', padding: 24,
-        }}
+        style={{ background: '#fff', borderRadius: 8, maxWidth: 600, width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: 24 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 18, color: '#1a1a2e' }}>
-            {isNew ? 'Add New Product' : 'Edit Product'}
-          </h2>
-          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <X size={20} />
-          </button>
+          <h2 style={{ margin: 0, fontSize: 18, color: '#1a1a2e' }}>{isNew ? 'Add New Product' : 'Edit Product'}</h2>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
         </div>
 
         {loading ? (
           <p style={{ color: '#999', textAlign: 'center', padding: 40 }}>Loading...</p>
         ) : (
           <form onSubmit={save}>
-            {/* Image upload */}
             <div style={{ marginBottom: 16 }}>
-              <ImageUpload
-                value={data.imageUrl}
-                onChange={(url) => setData({ ...data, imageUrl: url })}
-                label="Product Image"
-                hint="JPG, PNG, WebP — max 5MB"
-              />
+              <ImageUpload value={data.imageUrl} onChange={(url) => setData({ ...data, imageUrl: url })} label="Product Image" hint="JPG, PNG, WebP — max 2MB" />
             </div>
 
             <div className="admin-form-row">
@@ -169,12 +174,23 @@ export function ProductEditModal({
               </div>
             </div>
 
-            {isNew && (
-              <div className="admin-form-row">
-                <label>Category Slug</label>
-                <input value={data.categorySlug} onChange={(e) => setData({ ...data, categorySlug: e.target.value })} placeholder="flowers / cake / food..." />
-              </div>
-            )}
+            {/* Category dropdown — always shown (add + edit) */}
+            <div className="admin-form-row">
+              <label>Category *</label>
+              <select
+                value={data.categorySlug}
+                onChange={(e) => setData({ ...data, categorySlug: e.target.value })}
+                required
+                style={{ flex: 1, padding: '6px 10px', border: '1px solid #ddd', borderRadius: 4, fontSize: 13 }}
+              >
+                <option value="">— Select Category —</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.slug}>
+                    {c.parentName ? `${c.parentName} → ${c.name}` : c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="admin-form-row" style={{ alignItems: 'flex-start' }}>
               <label style={{ marginTop: 4, width: 100 }}>Description</label>
@@ -190,29 +206,17 @@ export function ProductEditModal({
                 <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                   <input
                     value={feature}
-                    onChange={(e) => {
-                      const features = [...data.features]
-                      features[i] = e.target.value
-                      setData({ ...data, features })
-                    }}
-                    placeholder={`Feature ${i + 1} (e.g. Kinder Bueno Chocolate – 6 pcs)`}
+                    onChange={(e) => { const features = [...data.features]; features[i] = e.target.value; setData({ ...data, features }) }}
+                    placeholder={`Feature ${i + 1}`}
                     style={{ flex: 1, padding: '6px 10px', border: '1px solid #ddd', borderRadius: 4, fontSize: 13 }}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setData({ ...data, features: data.features.filter((_, idx) => idx !== i) })}
-                    style={{ background: '#dc3545', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}
-                  >
+                  <button type="button" onClick={() => setData({ ...data, features: data.features.filter((_, idx) => idx !== i) })}
+                    style={{ background: '#dc3545', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}>
                     <X size={14} />
                   </button>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => setData({ ...data, features: [...data.features, ''] })}
-                className="admin-btn admin-btn-outline"
-                style={{ padding: '5px 12px', fontSize: 12 }}
-              >
+              <button type="button" onClick={() => setData({ ...data, features: [...data.features, ''] })} className="admin-btn admin-btn-outline" style={{ padding: '5px 12px', fontSize: 12 }}>
                 <Plus size={12} /> Add Feature
               </button>
             </div>
@@ -230,9 +234,7 @@ export function ProductEditModal({
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               {!isNew && data.id ? (
-                <button type="button" onClick={deleteProduct} className="admin-btn admin-btn-danger">
-                  <Trash2 size={14} /> Delete
-                </button>
+                <button type="button" onClick={deleteProduct} className="admin-btn admin-btn-danger"><Trash2 size={14} /> Delete</button>
               ) : <div />}
               <div style={{ display: 'flex', gap: 8 }}>
                 <button type="button" onClick={onClose} className="admin-btn admin-btn-outline">Cancel</button>
