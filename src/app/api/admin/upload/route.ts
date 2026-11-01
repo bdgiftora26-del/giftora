@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server'
 import { getAdminSession } from '@/lib/admin-auth'
 import { randomUUID } from 'node:crypto'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
-// Upload image file → converts to base64 data URL → returns URL
-// This works on Vercel serverless (no filesystem writes needed)
+// Upload image file → saves to /public/uploads → returns URL path
+// Files on disk are far more efficient than base64 in DB (no huge API payloads,
+// browser can cache them, and the DB stays small).
 export async function POST(req: Request) {
   const isAdmin = await getAdminSession()
   if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -24,18 +27,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Only image files allowed (JPG, PNG, WebP, GIF, SVG). Got: ${file.type} / .${ext}` }, { status: 400 })
   }
 
-  // Validate size (max 2MB — base64 increases size by ~33%)
-  if (file.size > 2 * 1024 * 1024) {
-    return NextResponse.json({ error: 'File too large (max 2MB for uploaded images)' }, { status: 400 })
+  // Validate size (max 5MB for disk-stored files)
+  if (file.size > 5 * 1024 * 1024) {
+    return NextResponse.json({ error: 'File too large (max 5MB for uploaded images)' }, { status: 400 })
   }
 
-  // Convert to base64 data URL
+  // Save file to /public/uploads/yyyy-mm/uuid.ext
   const bytes = await file.arrayBuffer()
   const buffer = Buffer.from(bytes)
   const safeExt = validExts.includes(ext) ? ext : 'jpg'
-  const mimeType = safeExt === 'svg' ? 'image/svg+xml' : `image/${safeExt === 'jpg' ? 'jpeg' : safeExt}`
-  const base64 = buffer.toString('base64')
-  const dataUrl = `data:${mimeType};base64,${base64}`
+  const now = new Date()
+  const monthDir = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const fileName = `${randomUUID()}.${safeExt}`
+  const relPath = `/uploads/${monthDir}/${fileName}`
+  const absDir = join(process.cwd(), 'public', 'uploads', monthDir)
+  const absPath = join(absDir, fileName)
 
-  return NextResponse.json({ ok: true, url: dataUrl })
+  try {
+    await mkdir(absDir, { recursive: true })
+    await writeFile(absPath, buffer)
+  } catch (e) {
+    console.error('[upload] Failed to write file:', e)
+    return NextResponse.json({ error: 'Failed to save file' }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true, url: relPath })
 }

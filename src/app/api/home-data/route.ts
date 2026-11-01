@@ -4,9 +4,10 @@ import { db } from '@/lib/db'
 export const dynamic = 'force-dynamic'
 
 // All home page data in ONE API call (client fetches this)
-// In-memory cache: 60s TTL (reduces DB hits across requests within same instance)
+// In-memory cache: 5min TTL (reduces DB hits across requests within same instance).
+// Home page content changes infrequently, so a longer TTL keeps the page snappy.
 let cache: { ts: number; data: any } | null = null
-const TTL = 60_000
+const TTL = 5 * 60_000
 
 export async function GET() {
   if (cache && Date.now() - cache.ts < TTL) {
