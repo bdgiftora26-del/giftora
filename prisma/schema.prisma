@@ -9,7 +9,7 @@ datasource db {
   // Production uses PostgreSQL (Supabase). For local dev with SQLite, swap
   // the provider line below to `sqlite` and use DATABASE_URL="file:./db/custom.db"
   // (the existing /db/custom.db is SQLite and matches the seed).
-  provider  = "sqlite"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
