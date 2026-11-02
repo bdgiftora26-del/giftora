@@ -1,0 +1,70 @@
+# Cache pre-warm workflow
+# ------------------------
+# Hits https://www.bdgiftora.com/api/cron/prewarm every 10 minutes so the ISR
+# cache stays warm and the Vercel serverless function doesn't go cold between
+# real visitors.
+#
+# Why GitHub Actions and not Vercel Cron:
+#   Vercel Hobby (free tier) only allows DAILY crons. We need every 10 min.
+#   GitHub Actions scheduled workflows are free for public repos and allow
+#   5-min granularity.
+#
+# Setup (one-time):
+#   1. Generate a random secret:  openssl rand -hex 32
+#   2. Set it as a Vercel env var named CRON_SECRET (Production + Preview)
+#   3. Set the same value as a GitHub Actions secret named CRON_SECRET
+#      (Settings → Secrets and variables → Actions → New repository secret)
+#   4. (Optional) Set SITE_URL if you want to target a different domain
+#      (defaults to https://www.bdgiftora.com)
+#
+# Once merged to main, this workflow runs automatically every 10 min.
+# Logs: GitHub → Actions tab → "Cache pre-warm"
+
+name: Cache pre-warm
+
+on:
+  schedule:
+    # Every 10 minutes. GitHub Actions cron is in UTC.
+    # NOTE: GitHub doesn't guarantee exact timing for scheduled workflows on
+    # free plans — during high load, runs may be delayed or skipped. For
+    # guaranteed timing, use a dedicated uptime monitor (UptimeRobot,
+    # cron-job.org) hitting the same URL.
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Manual trigger for testing
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prewarm
+  cancel-in-progress: false
+
+jobs:
+  prewarm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit prewarm endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://www.bdgiftora.com' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET GitHub Actions secret is not set. See .github/workflows/prewarm.yml for setup instructions."
+            exit 1
+          fi
+          echo "Hitting $SITE_URL/api/cron/prewarm ..."
+          RESPONSE=$(curl -s -w "\n---HTTP_STATUS:%{http_code}---\n" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 60 \
+            "$SITE_URL/api/cron/prewarm")
+          STATUS=$(echo "$RESPONSE" | grep -oE 'HTTP_STATUS:[0-9]+' | cut -d: -f2)
+          BODY=$(echo "$RESPONSE" | sed '/---HTTP_STATUS:/d')
+          echo "HTTP status: $STATUS"
+          echo "Response body:"
+          echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Prewarm endpoint returned HTTP $STATUS"
+            exit 1
+          fi
+          echo "✓ Prewarm complete"
