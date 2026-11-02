@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useCurrency } from '@/components/providers'
@@ -204,11 +205,25 @@ export function Sidebar({
 
 function SidebarProduct({ product }: { product: WidgetProduct }) {
   const price = product.salePriceBdt || product.priceBdt
+  const isPlaceholder = product.image?.startsWith('/placeholders/')
   return (
     <div className="sidebar-product">
       <Link href={`/product/${product.slug}`} className="sidebar-product-link">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={product.image} alt={product.name} className="sidebar-product-img" width={80} height={80} />
+        {isPlaceholder ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={product.image} alt={product.name} className="sidebar-product-img" width={80} height={80} />
+        ) : (
+          <Image
+            src={product.image}
+            alt={product.name}
+            width={80}
+            height={80}
+            className="sidebar-product-img"
+            sizes="80px"
+            loading="lazy"
+            unoptimized={!product.image.startsWith('http') && !product.image.startsWith('/')}
+          />
+        )}
         <div className="sidebar-product-info">
           <div className="sidebar-product-name">{product.name}</div>
           <div className="sidebar-product-price">

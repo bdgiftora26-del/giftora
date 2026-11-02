@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { Search } from 'lucide-react'
@@ -78,8 +79,15 @@ export function Header() {
       <div className="header-inner">
         <div className="header-left">
           <Link href="/" className="logo-block" aria-label="BDGiftora.com">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand-logo.jpg" alt="BDGiftora.com" className="logo-img" width={150} height={80} />
+            <Image
+              src="/brand-logo.jpg"
+              alt="BDGiftora.com"
+              width={150}
+              height={80}
+              className="logo-img"
+              sizes="150px"
+              priority
+            />
             <div className="logo-meta">
               <span className="logo-tagline">Gift Delivery in Bangladesh</span>
               <a href="tel:+8801719818182" className="header-phone">
@@ -120,8 +128,20 @@ export function Header() {
                       className={`search-suggestion-item ${i === activeIndex ? 'active' : ''}`}
                       onClick={() => { setShowSuggestions(false); setQ('') }}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={s.image} alt={s.name} className="search-suggestion-img" width={40} height={40} />
+                      {s.image?.startsWith('/placeholders/') ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={s.image} alt={s.name} className="search-suggestion-img" width={40} height={40} />
+                      ) : (
+                        <Image
+                          src={s.image}
+                          alt={s.name}
+                          width={40}
+                          height={40}
+                          className="search-suggestion-img"
+                          sizes="40px"
+                          unoptimized={!s.image.startsWith('http') && !s.image.startsWith('/')}
+                        />
+                      )}
                       <div className="search-suggestion-info">
                         <div className="search-suggestion-name">{s.name}</div>
                       </div>

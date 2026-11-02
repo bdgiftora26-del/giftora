@@ -2,19 +2,18 @@ import { StorefrontShell } from '@/components/layout/StorefrontShell'
 import { HomeClient } from '@/components/home/HomeClient'
 import { getHomeData } from '@/lib/home-data'
 
-// Server-rendered homepage. Data is loaded SERVER-SIDE here (using the cached
-// `home` loader) and passed to <HomeClient> as props — so the browser receives
-// a COMPLETE page (header + slider + product sections + footer) in a single
-// HTML response. No client-side loading spinner in the middle.
+// ISR homepage — the page HTML is cached at the CDN edge and regenerated at
+// most every 15 minutes (or immediately when an admin mutation calls
+// `bustProduct`/`bustBanner`/`bustCategory`, which triggers `revalidateTag`).
 //
-// Cache behaviour:
-//   - First visitor after a bust: server pays the DB cost (~5s) but renders the
-//     FULL page. The user sees the browser's native page-load indicator, then
-//     the entire page appears at once.
-//   - Every subsequent visitor: cache hit (~6ms) → instant full page.
-export const dynamic = 'force-dynamic'
-// Re-render at most every 15 min even without a mutation (matches cache TTL).
-export const revalidate = 900
+// Why NOT `force-dynamic`: that mode made every request render from scratch
+// on the server. On Vercel Hobby that means a fresh serverless invocation per
+// visitor — and a cold-start + DB round-trip could push TTFB to 5-28s. With
+// ISR, the CDN serves the cached HTML in ~50ms for the vast majority of hits.
+//
+// Data still flows through the two-tier cache in src/lib/cache.ts (L1 in-mem +
+// L2 Next.js Data Cache), so even the rare regeneration is fast.
+export const revalidate = 900 // 15 min — matches the HOME cache TTL
 
 export default async function HomePage() {
   const data = await getHomeData('en')

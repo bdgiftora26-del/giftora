@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { db } from '@/lib/db'
+import { cached } from '@/lib/cache'
+import { tag, TTL } from '@/lib/cache-tags'
 import { Facebook, Twitter, Youtube, Instagram } from 'lucide-react'
 
 const TOP_NAV = [
@@ -11,29 +13,58 @@ const TOP_NAV = [
   { label: 'FAQ', href: '/faq' },
 ]
 
+/**
+ * Footer category links — cached under the `category` tag so any
+ * bustCategory() call from the admin drops it immediately.
+ *
+ * Previously this ran an UN-CACHED DB query on every page render (every
+ * home / category / product page), which on cross-region Supabase added
+ * a noticeable round-trip to every single request. Now it's a µs L1 hit
+ * in the warm path and a ~50ms L2 hit on a fresh serverless instance.
+ */
+async function getFooterCategories(): Promise<{ name: string; slug: string }[]> {
+  return cached(
+    'footer:categories',
+    [tag.category(), tag.categoryPage()],
+    TTL.CATEGORY_LIST,
+    async () => {
+      try {
+        const cats = await db.category.findMany({
+          where: { parentId: null, isActive: true, showInSidebar: true },
+          include: {
+            i18n: { where: { locale: 'en' } },
+            children: {
+              where: { isActive: true },
+              include: { i18n: { where: { locale: 'en' } } },
+              orderBy: { sortOrder: 'asc' },
+            },
+          },
+          orderBy: { sortOrder: 'asc' },
+        })
+        const out: { name: string; slug: string }[] = []
+        cats.forEach((c) => {
+          const parentSlug = c.slug
+          const parentName = c.i18n[0]?.name || c.slug
+          out.push({ name: parentName, slug: parentSlug })
+          c.children.forEach((ch) => {
+            out.push({
+              name: ch.i18n[0]?.name || ch.slug,
+              slug: `${parentSlug}/${ch.slug}`,
+            })
+          })
+        })
+        return out
+      } catch {
+        // If footer categories can't load, return empty rather than crashing
+        // the whole page (footer is non-critical).
+        return []
+      }
+    },
+  )
+}
+
 export async function Footer() {
-  // Fetch actual categories from DB — only top-level (children need /parent/child path)
-  let allCategories: { name: string; slug: string }[] = []
-  try {
-    const cats = await db.category.findMany({
-      where: { parentId: null, isActive: true, showInSidebar: true },
-      include: {
-        i18n: { where: { locale: 'en' } },
-        children: { where: { isActive: true }, include: { i18n: { where: { locale: 'en' } } }, orderBy: { sortOrder: 'asc' } },
-      },
-      orderBy: { sortOrder: 'asc' },
-    })
-    cats.forEach((c) => {
-      const parentSlug = c.slug
-      const parentName = c.i18n[0]?.name || c.slug
-      // Add top-level category
-      allCategories.push({ name: parentName, slug: parentSlug })
-      // Add children with full path: /parent/child
-      c.children.forEach((ch) => {
-        allCategories.push({ name: ch.i18n[0]?.name || ch.slug, slug: `${parentSlug}/${ch.slug}` })
-      })
-    })
-  } catch {}
+  const allCategories = await getFooterCategories()
 
   // Split into 5 columns
   const perCol = Math.ceil(allCategories.length / 5)
