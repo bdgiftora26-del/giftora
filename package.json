@@ -12,7 +12,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "db:seed": "bun run prisma/seed.ts"
+    "db:seed": "bun run prisma/seed.ts",
+    "preoptimize-images": "node scripts/preoptimize-images.mjs",
+    "prewarm": "bun run src/scripts/prewarm-cache.ts"
   },
   "prisma": {
     "seed": "bun run prisma/seed.ts"

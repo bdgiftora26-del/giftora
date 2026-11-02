@@ -37,6 +37,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Preconnect to external origins we'll fetch from during page load.
+            This shaves ~100-300ms off the first image / script fetch from
+            each origin by opening the TCP+TLS connection in parallel with
+            HTML parsing. Order matters: preconnect first, then dns-prefetch
+            as a fallback for browsers that don't support preconnect. */}
+        <link rel="preconnect" href="https://ymquocspwnnfpjitziow.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://ymquocspwnnfpjitziow.supabase.co" />
+        <link rel="preconnect" href="https://embed.tawk.to" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://embed.tawk.to" />
+      </head>
       <body>
         <LocaleProvider>
           <CurrencyProvider>
@@ -46,8 +57,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </CartProvider>
           </CurrencyProvider>
         </LocaleProvider>
-        {/* Tawk.to Live Chat */}
-        <Script id="tawk-to" strategy="afterInteractive">
+        {/* Tawk.to Live Chat
+            strategy="lazyOnload" — defer until the page is fully loaded and
+            idle. Previously `afterInteractive` which fired right after
+            hydration, racing with image fetches for bandwidth. Live chat is
+            non-critical for the initial page view; deferring it cuts ~80KB
+            of JS + a stylesheet + a websocket from the critical path. */}
+        <Script id="tawk-to" strategy="lazyOnload">
           {`
             var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
             (function(){
