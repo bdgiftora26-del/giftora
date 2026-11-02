@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { useCart, useCurrency, useT } from '@/components/providers'
 import { Price } from '@/components/Price'
@@ -86,8 +87,19 @@ export function CartView() {
               {cart.items.map((item) => (
                 <tr key={`${item.productId}-${item.variantId ?? 'none'}`}>
                   <td>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.image} alt={item.name} width={60} height={60} />
+                    {item.image?.startsWith('/placeholders/') ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.image} alt={item.name} width={60} height={60} />
+                    ) : (
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        width={60}
+                        height={60}
+                        sizes="60px"
+                        unoptimized={!item.image.startsWith('http') && !item.image.startsWith('/')}
+                      />
+                    )}
                   </td>
                   <td>
                     <Link href={`/product/${item.slug}`}>{item.name}</Link>

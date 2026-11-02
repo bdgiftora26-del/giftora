@@ -6,7 +6,9 @@ import { CategoryProductsClient } from '@/components/product/CategoryProductsCli
 import { getCategoryProducts } from '@/lib/category-products'
 import type { Metadata } from 'next'
 
-export const dynamic = 'force-dynamic'
+// ISR category page — HTML cached at edge, regenerated every 10 min or when
+// `bustCategory`/`bustProduct` fires (which calls revalidateTag).
+export const revalidate = 600 // 10 min — matches CATEGORY_PAGE TTL
 
 export const metadata: Metadata = {
   title: 'BDGiftora.com — Send Gifts to Bangladesh',

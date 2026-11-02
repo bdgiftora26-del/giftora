@@ -6,6 +6,9 @@ generator client {
 }
 
 datasource db {
+  // Production uses PostgreSQL (Supabase). For local dev with SQLite, swap
+  // the provider line below to `sqlite` and use DATABASE_URL="file:./db/custom.db"
+  // (the existing /db/custom.db is SQLite and matches the seed).
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
@@ -81,6 +84,13 @@ model Category {
   i18n          CategoryI18n[]
   products      ProductCategory[]
   @@unique([parentId, slug, cityId])
+  // Hot query paths:
+  //   WHERE parentId IS NULL AND showInSidebar AND isActive  (sidebar + footer)
+  //   WHERE parentId = ?                                       (tree traversal)
+  //   WHERE parentId = ? AND isActive                          (active children)
+  @@index([parentId, isActive])
+  @@index([showInSidebar, isActive, sortOrder])
+  @@index([slug, parentId])
 }
 
 model CategoryI18n {
@@ -120,6 +130,15 @@ model Product {
   relatedTo     RelatedProduct[] @relation("To")
   cartItems     CartItem[]
   orderItems    OrderItem[]
+  // Hot query paths:
+  //   WHERE isActive = true ORDER BY orderCount DESC   (home sections, top products)
+  //   WHERE isActive = true ORDER BY priceBdt          (price sort on category page)
+  //   WHERE isActive = true ORDER BY createdAt DESC    (newest sort)
+  //   WHERE isActive = true ORDER BY slug              (default sort)
+  @@index([isActive, orderCount])
+  @@index([isActive, priceBdt])
+  @@index([isActive, createdAt])
+  @@index([isActive, slug])
 }
 
 model ProductI18n {
@@ -158,6 +177,8 @@ model ProductCategory {
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   @@id([productId, categoryId])
+  // Reverse lookup: "all products in this category" uses categoryId filter
+  @@index([categoryId])
 }
 
 model RelatedProduct {
@@ -350,6 +371,8 @@ model Banner {
   payload   String?
   sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
+  // Home slider query: WHERE placement = 'HOME_SLIDER' AND isActive ORDER BY sortOrder
+  @@index([placement, isActive, sortOrder])
 }
 
 model Testimonial {
@@ -360,6 +383,8 @@ model Testimonial {
   rating    Int      @default(5)
   approved  Boolean  @default(false)
   createdAt DateTime @default(now())
+  // Home page: WHERE approved = true ORDER BY createdAt DESC LIMIT 1
+  @@index([approved, createdAt])
 }
 
 model CmsPage {

@@ -1,4 +1,4 @@
-// Shared category-products loader (cached). Used by:
+// Shared category-products loader (cached, two-tier). Used by:
 //   - src/app/[...categoryPath]/page.tsx  (server component → initial products as props, NO loading spinner)
 //   - src/app/api/products/route.ts      (API route, kept for any client refresh)
 //
@@ -12,8 +12,13 @@ import { tag, TTL as CACHE_TTL } from '@/lib/cache-tags'
 
 export type CategoryProductsPayload = Awaited<ReturnType<typeof loadCategoryProducts>>
 
-/** Cached products-in-a-category list. First caller warms; rest get ~5ms. */
-export function getCategoryProducts(opts: { category: string; sort?: string; page?: number; perPage?: number }): Promise<CategoryProductsPayload> {
+/** Cached products-in-a-category list. First caller warms; rest get L1 µs-hit. */
+export function getCategoryProducts(opts: {
+  category: string
+  sort?: string
+  page?: number
+  perPage?: number
+}): Promise<CategoryProductsPayload> {
   const category = opts.category
   const sort = opts.sort || 'default'
   const page = Math.max(1, opts.page || 1)
@@ -23,24 +28,74 @@ export function getCategoryProducts(opts: { category: string; sort?: string; pag
   return cached(key, tags, CACHE_TTL.PRODUCT_LIST, () => loadCategoryProducts({ category, sort, page, perPage }))
 }
 
-async function loadCategoryProducts({ category, sort, page, perPage }: { category: string; sort: string; page: number; perPage: number }) {
-  let categoryIds: number[] = []
-  if (category) {
-    const cat = await db.category.findFirst({ where: { slug: category } })
-    if (cat) {
-      const collect = async (pid: number): Promise<number[]> => {
-        const children = await db.category.findMany({ where: { parentId: pid } })
-        const ids = [pid]
-        for (const c of children) ids.push(...(await collect(c.id)))
-        return ids
+/**
+ * Build the set of category IDs to filter products by.
+ *
+ * Given a leaf category slug, return [leafId, ...allDescendantIds].
+ *
+ * Implementation: ONE query fetches the entire category table (just id,
+ * parentId, slug) and we walk the tree in-memory. This replaces the old
+ * recursive N+1 pattern that fired one DB query per node — which on a deep
+ * tree + cross-region Supabase could add seconds of latency per request.
+ *
+ * The full-tree fetch is itself cheap (~108 categories × 3 small columns =
+ * a few KB) and is memoized implicitly inside the cached() wrapper at the
+ * caller, so the tree walk only runs on cache miss.
+ */
+async function collectCategoryIds(slug: string): Promise<number[]> {
+  // Single query — entire category table, smallest possible column set.
+  const all = await db.category.findMany({
+    select: { id: true, parentId: true, slug: true },
+  })
+
+  // Find the root by slug (we accept the first hit — slug is unique within
+  // a parent+city tuple, and storefront queries are city-agnostic).
+  const root = all.find((c) => c.slug === slug)
+  if (!root) return []
+
+  // Build child-of map: parentId -> [childId, childId, ...]
+  const childrenOf = new Map<number | null, number[]>()
+  for (const c of all) {
+    const arr = childrenOf.get(c.parentId) ?? []
+    arr.push(c.id)
+    childrenOf.set(c.parentId, arr)
+  }
+
+  // BFS/DFS from root — collect root + all descendants.
+  const out: number[] = [root.id]
+  const stack: number[] = [root.id]
+  while (stack.length) {
+    const id = stack.pop()!
+    const kids = childrenOf.get(id)
+    if (kids) {
+      for (const k of kids) {
+        out.push(k)
+        stack.push(k)
       }
-      categoryIds = await collect(cat.id)
     }
   }
+  return out
+}
+
+async function loadCategoryProducts({
+  category,
+  sort,
+  page,
+  perPage,
+}: {
+  category: string
+  sort: string
+  page: number
+  perPage: number
+}) {
+  // Single-tree-fetch (no recursion).
+  const categoryIds = category ? await collectCategoryIds(category) : []
 
   const where = {
     isActive: true,
-    ...(categoryIds.length > 0 ? { categories: { some: { categoryId: { in: categoryIds } } } } : {}),
+    ...(categoryIds.length > 0
+      ? { categories: { some: { categoryId: { in: categoryIds } } } }
+      : {}),
   }
 
   const orderBy =
@@ -54,11 +109,15 @@ async function loadCategoryProducts({ category, sort, page, perPage }: { categor
             ? { createdAt: 'desc' as const }
             : { slug: 'asc' as const }
 
+  // Total + page in parallel (2 queries, not N).
   const [total, rows] = await Promise.all([
     db.product.count({ where }),
     db.product.findMany({
       where,
-      include: { i18n: { where: { locale: 'en' } }, images: { take: 1, orderBy: { sortOrder: 'asc' } } },
+      include: {
+        i18n: { where: { locale: 'en' } },
+        images: { take: 1, orderBy: { sortOrder: 'asc' } },
+      },
       orderBy,
       skip: (page - 1) * perPage,
       take: perPage,

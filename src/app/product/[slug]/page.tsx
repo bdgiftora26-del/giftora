@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Image from 'next/image'
 import { db } from '@/lib/db'
 import { StorefrontShell } from '@/components/layout/StorefrontShell'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
@@ -11,7 +12,7 @@ import { cached } from '@/lib/cache'
 import { tag, TTL as CACHE_TTL } from '@/lib/cache-tags'
 import type { Metadata } from 'next'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 1800 // 30 min — matches PRODUCT_DETAIL TTL
 const LOCALE = 'en'
 
 
@@ -137,20 +138,50 @@ export default async function ProductPage({
 
       <div className="product-detail-top">
         <div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={product.images[0]?.url || '/placeholders/products/generic-01.svg'}
-            alt={name}
-            className="product-main-img"
-            width={300}
-            height={300}
-          />
+          {(() => {
+            const mainSrc = product.images[0]?.url || '/placeholders/products/generic-01.svg'
+            const isPlaceholder = mainSrc.startsWith('/placeholders/')
+            return isPlaceholder ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={mainSrc}
+                alt={name}
+                className="product-main-img"
+                width={300}
+                height={300}
+              />
+            ) : (
+              <Image
+                src={mainSrc}
+                alt={name}
+                width={400}
+                height={400}
+                className="product-main-img"
+                sizes="(max-width: 768px) 90vw, 400px"
+                priority
+              />
+            )
+          })()}
           {product.images.length > 1 && (
             <div className="product-thumbs">
-              {product.images.map((img) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={img.id} src={img.url} alt={img.alt || name} className="product-thumb" width={60} height={60} />
-              ))}
+              {product.images.map((img) => {
+                const isPlaceholder = img.url.startsWith('/placeholders/')
+                return isPlaceholder ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={img.id} src={img.url} alt={img.alt || name} className="product-thumb" width={60} height={60} />
+                ) : (
+                  <Image
+                    key={img.id}
+                    src={img.url}
+                    alt={img.alt || name}
+                    width={80}
+                    height={80}
+                    className="product-thumb"
+                    sizes="80px"
+                    loading="lazy"
+                  />
+                )
+              })}
             </div>
           )}
         </div>

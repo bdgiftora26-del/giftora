@@ -44,22 +44,55 @@ export async function StorefrontShell({
 }
 
 // Helper to resolve a category by nested slug path (top-level first, then children).
+//
+// Single-tree-fetch implementation: ONE query loads every active category
+// (id, slug, parentId, icon, cityId, i18n) into memory, then we walk the
+// requested slug path through the in-memory tree. This replaces the old
+// pattern of one DB query per slug in the path — which on a 3-deep path
+// + cross-region Supabase added ~3 round-trips per category page hit.
 export async function resolveCategoryPath(slugs: string[], locale: string = 'en') {
   if (slugs.length === 0) return []
-  // Cache per path+locale. Tagged with `category` + `category-page` so any
-  // category mutation (bustCategory) drops every cached path at once.
   const key = `catpath:${locale}:${slugs.join('/')}`
   return cached(key, [tag.category(), tag.categoryPage()], TTL.CATEGORY_LIST, async () => {
+    // Fetch the entire active category tree + i18n in ONE query.
+    // Use `select` only (Prisma forbids mixing `select` + `include` at the
+    // same level). i18n is selected with a sub-select for the fields we need.
+    const all = await db.category.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        slug: true,
+        parentId: true,
+        cityId: true,
+        icon: true,
+        i18n: { select: { locale: true, name: true, description: true } },
+      },
+    })
+
+    // Index by (parentId, slug) → category, for O(1) path traversal.
+    // parentId null is encoded as 0 because Map keys are strict-equal.
+    const byParentSlug = new Map<string, typeof all[number]>()
+    for (const c of all) {
+      const k = `${c.parentId ?? 0}|${c.slug}`
+      byParentSlug.set(k, c)
+    }
+
+    const resolved: {
+      id: number
+      slug: string
+      name: string
+      description?: string | null
+      icon?: string | null
+      parentId: number | null
+      cityId: number | null
+    }[] = []
     let currentParent: number | null = null
-    const resolved: { id: number; slug: string; name: string; description?: string | null; icon?: string | null; parentId: number | null; cityId: number | null }[] = []
-    for (let i = 0; i < slugs.length; i++) {
-      const slug = slugs[i]
-      const cat = await db.category.findFirst({
-        where: { slug, parentId: currentParent ?? null, isActive: true },
-        include: { i18n: true },
-      })
+    for (const slug of slugs) {
+      const cat = byParentSlug.get(`${currentParent ?? 0}|${slug}`)
       if (!cat) return null
-      const i18n = cat.i18n.find((x) => x.locale === locale) || cat.i18n.find((x) => x.locale === 'en')
+      const i18n =
+        cat.i18n.find((x) => x.locale === locale) ||
+        cat.i18n.find((x) => x.locale === 'en')
       resolved.push({
         id: cat.id,
         slug: cat.slug,
