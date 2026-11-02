@@ -59,3 +59,7 @@ server.log
 prisma/schema-sqlite.prisma
 prisma/db/
 
+
+# Pre-optimized product images — regenerated via 'bun run preoptimize-images'
+# Don't commit; they add ~16MB and are derived from /public/products/*.jpg
+public/products/optimized/
