@@ -162,7 +162,7 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   text-decoration: none;
 }
 .logo-img {
-  width: auto; height: 80px; object-fit: contain; flex-shrink: 0;
+  width: auto; height: 110px; object-fit: contain; flex-shrink: 0;
 }
 .logo-meta {
   display: flex; flex-direction: column; gap: 4px;

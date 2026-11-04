@@ -113,10 +113,10 @@ export function Header() {
             <Image
               src="/brand-logo.jpg"
               alt="BDGiftora.com"
-              width={150}
-              height={80}
+              width={200}
+              height={110}
               className="logo-img"
-              sizes="150px"
+              sizes="200px"
               priority
             />
           </Link>

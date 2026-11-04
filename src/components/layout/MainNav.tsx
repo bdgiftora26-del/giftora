@@ -19,7 +19,7 @@ const NAV: NavItem[] = [
   {
     label: 'Flowers',
     href: '/flowers',
-    image: '/placeholders/tiles/tile-01.svg',
+    image: '/placeholders/categories/flowers.jpg',
     children: [
       { label: 'Roses in bouquet', href: '/flowers/roses-in-bouquet' },
       { label: 'Luxury Large Rose Arrangements', href: '/flowers/luxury-large-rose-arrangements' },
@@ -39,7 +39,7 @@ const NAV: NavItem[] = [
   {
     label: 'Birthday',
     href: '/birthday',
-    image: '/placeholders/tiles/tile-02.svg',
+    image: '/placeholders/categories/birthday.jpg',
     children: [
       { label: 'Birthday Cake', href: '/birthday/birthday-cake' },
       { label: 'Birthday combo Gifts', href: '/birthday/birthday-combo-gifts' },
@@ -54,7 +54,7 @@ const NAV: NavItem[] = [
   {
     label: 'Cake',
     href: '/cake',
-    image: '/placeholders/tiles/tile-03.svg',
+    image: '/placeholders/categories/cake.jpg',
     children: [
       { label: "Mr. Baker Cake", href: '/cake/mr-baker-cake' },
       { label: "Cooper's Cake", href: '/cake/coopers-cake' },
@@ -69,7 +69,7 @@ const NAV: NavItem[] = [
   {
     label: 'Anniversary',
     href: '/anniversary',
-    image: '/placeholders/tiles/tile-04.svg',
+    image: '/placeholders/categories/anniversary.jpg',
     children: [
       { label: 'Anniversary combo gifts', href: '/anniversary/anniversary-combo-gifts' },
       { label: 'Anniversary cake', href: '/anniversary/anniversary-cake' },
@@ -82,7 +82,7 @@ const NAV: NavItem[] = [
   {
     label: 'Food',
     href: '/food',
-    image: '/placeholders/tiles/tile-05.svg',
+    image: '/placeholders/categories/food.jpg',
     children: [
       { label: 'Fakruddin Biryani', href: '/food/fakruddin-biryani' },
       { label: 'Star Biryani', href: '/food/star-biryani' },
