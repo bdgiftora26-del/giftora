@@ -93,7 +93,11 @@ export const ALL_PAYMENT_METHODS: PaymentMethodDef[] = [
 ]
 
 // Setting key where the enabled-methods list is persisted as a JSON array.
-const SETTING_KEY = 'payment:enabled'
+// The ':v2' suffix is a schema-version bump — when we changed the default
+// from 'manual-bkash' to 'pay-on-contact', old deployments had the v1 key
+// stored with ['manual-bkash']. Bumping to v2 makes those stale entries
+// invisible and lets the new DEFAULT_ENABLED kick in.
+const SETTING_KEY = 'payment:enabled:v2'
 
 // Default enabled set — used when no Setting row exists yet (fresh install).
 // Per the product owner's current direction: customers place the order first,
