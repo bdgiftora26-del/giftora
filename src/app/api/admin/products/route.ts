@@ -76,7 +76,11 @@ export async function POST(req: Request) {
   if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { name, priceBdt, salePriceBdt, description, imageUrl, categorySlug, isCake, isActive, features } = body
+  const {
+    name, slug: bodySlug, priceBdt, salePriceBdt, description, imageUrl,
+    categorySlug, isCake, isActive, features,
+    stockQty, weightGrams, metaTitle, metaDescription,
+  } = body
 
   if (!name || !priceBdt) {
     return NextResponse.json({ error: 'Name and price required' }, { status: 400 })
@@ -84,11 +88,12 @@ export async function POST(req: Request) {
 
   const featuresStr = Array.isArray(features) ? features.filter(Boolean).join('|') : ''
 
-  const slug = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').slice(0, 80)
-  let uniqueSlug = slug
+  // Use the admin-provided slug if present, otherwise auto-generate from name.
+  const rawSlug = (bodySlug || name).toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80)
+  let uniqueSlug = rawSlug
   let i = 1
   while (await db.product.findUnique({ where: { slug: uniqueSlug } })) {
-    uniqueSlug = `${slug}-${i++}`
+    uniqueSlug = `${rawSlug}-${i++}`
   }
   const sku = 'BG-' + Date.now().toString().slice(-8)
 
@@ -98,20 +103,48 @@ export async function POST(req: Request) {
     if (cat) categoryId = cat.id
   }
 
+  // Build the product record. stockQty + weightGrams are nullable.
+  const productData: any = {
+    sku,
+    slug: uniqueSlug,
+    priceBdt: Number(priceBdt),
+    salePriceBdt: salePriceBdt ? Number(salePriceBdt) : null,
+    isCake: !!isCake,
+    isActive: isActive !== false,
+  }
+  // Only set stockMode/stockQty if a stock value was provided. Otherwise
+  // default UNLIMITED (no stock tracking) — matches the original behavior.
+  if (stockQty != null && stockQty !== '') {
+    productData.stockMode = 'TRACKED'
+    productData.stockQty = Number(stockQty)
+  }
+  if (weightGrams != null && weightGrams !== '') {
+    productData.weightGrams = Number(weightGrams)
+  }
+
+  // Build the i18n records with the new SEO fields.
+  const i18nData = [
+    {
+      locale: 'en',
+      name,
+      description: description || '',
+      shortDescription: featuresStr,
+      metaTitle: metaTitle || null,
+      metaDescription: metaDescription || null,
+    },
+    {
+      locale: 'bn',
+      name,
+      description: description || '',
+      metaTitle: metaTitle || null,
+      metaDescription: metaDescription || null,
+    },
+  ]
+
   const product = await db.product.create({
     data: {
-      sku,
-      slug: uniqueSlug,
-      priceBdt: Number(priceBdt),
-      salePriceBdt: salePriceBdt ? Number(salePriceBdt) : null,
-      isCake: !!isCake,
-      isActive: isActive !== false,
-      i18n: {
-        create: [
-          { locale: 'en', name, description: description || '', shortDescription: featuresStr },
-          { locale: 'bn', name, description: description || '' },
-        ],
-      },
+      ...productData,
+      i18n: { create: i18nData },
       images: imageUrl ? { create: { url: imageUrl, alt: name } } : undefined,
       categories: categoryId ? { create: { categoryId } } : undefined,
     },

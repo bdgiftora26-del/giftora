@@ -116,6 +116,10 @@ model Product {
   stockMode     StockMode @default(UNLIMITED)
   stockQty      Int?
   isCake        Boolean   @default(false)
+  // Weight in grams — used for weight-based products (cakes, food, etc.)
+  // Displayed on the product page as "Weight: 500g" and used for shipping
+  // calculations if needed. Optional — leave null for non-weighted products.
+  weightGrams   Int?
   vendorId      Int?
   vendor        Vendor?   @relation(fields: [vendorId], references: [id])
   firstSoldYear Int?
@@ -148,6 +152,11 @@ model ProductI18n {
   name              String
   shortDescription  String?
   description       String?
+  // SEO fields — per-locale so EN and BN can have different meta tags.
+  // If null, the product page falls back to the product name + auto-generated
+  // description. Set these for custom search-engine + social-share snippets.
+  metaTitle         String?
+  metaDescription   String?
   product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   @@unique([productId, locale])
 }

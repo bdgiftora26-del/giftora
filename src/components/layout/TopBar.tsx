@@ -85,7 +85,7 @@ function CurrencyDropdown() {
             position: 'absolute',
             top: 'calc(100% + 4px)',
             left: 0,
-            zIndex: 50,
+            zIndex: 9999,
             background: '#fff',
             border: '1px solid var(--c-line)',
             borderRadius: 4,
