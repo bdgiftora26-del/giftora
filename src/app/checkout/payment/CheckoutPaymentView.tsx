@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart, useCurrency } from '@/components/providers'
 import { Price } from '@/components/Price'
@@ -41,6 +41,12 @@ export function CheckoutPaymentView() {
   const [txnRef, setTxnRef] = useState('')
   const [copied, setCopied] = useState(false)
 
+  // Ref flag: set to true right before we call cart.clear() + navigate to
+  // the complete page. Without this, the useEffect below sees the empty
+  // cart (after clear) and races our router.push — the user ends up at
+  // /cart instead of /checkout/complete/[orderNo].
+  const placingOrderRef = useRef(false)
+
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -64,6 +70,11 @@ export function CheckoutPaymentView() {
   }, [])
 
   useEffect(() => {
+    // Skip the "empty cart" redirect when we're intentionally clearing
+    // the cart as part of order placement — otherwise this fires between
+    // cart.clear() and router.push('/checkout/complete/...'), stealing
+    // the navigation and sending the user to /cart instead.
+    if (placingOrderRef.current) return
     if (cart.items.length === 0) router.replace('/cart')
   }, [cart.items.length, router])
 
@@ -124,6 +135,9 @@ export function CheckoutPaymentView() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to place order')
+      // Set the flag BEFORE clearing the cart so the empty-cart useEffect
+      // doesn't redirect to /cart. Clear it after navigation starts.
+      placingOrderRef.current = true
       cart.clear()
       router.push(`/checkout/complete/${data.orderNo}`)
     } catch (err) {
