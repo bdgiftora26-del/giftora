@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCart, useCurrency } from '@/components/providers'
 import { Price } from '@/components/Price'
 import Link from 'next/link'
-import { ChevronDown, Copy, Check, AlertCircle } from 'lucide-react'
+import { AlertCircle, Phone, Mail, Clock, ShieldCheck } from 'lucide-react'
 
 type ReceiverInfo = {
   label: string
@@ -17,15 +17,12 @@ type PaymentMethod = {
   id: string
   label: string
   desc: string
-  type: 'manual' | 'online'
+  type: 'manual' | 'online' | 'deferred'
   receiver?: ReceiverInfo
 }
 
 // Validate a Bangladeshi phone number (bKash sender).
-// Accepts: 01XXXXXXXXX, +8801XXXXXXXXX, 8801XXXXXXXXX
 const BKASH_NUMBER_RE = /^(?:\+?880|0)1[3-9]\d{8}$/
-
-// bKash Transaction IDs are typically 10 alphanumeric chars.
 const BKASH_TRXID_RE = /^[A-Z0-9]{8,16}$/
 
 export function CheckoutPaymentView() {
@@ -39,12 +36,11 @@ export function CheckoutPaymentView() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // bKash-specific fields
+  // bKash-specific fields (only shown if admin ever enables manual-bkash)
   const [bkashSender, setBkashSender] = useState('')
   const [txnRef, setTxnRef] = useState('')
   const [copied, setCopied] = useState(false)
 
-  // Load enabled payment methods from /api/payment-methods
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -75,6 +71,7 @@ export function CheckoutPaymentView() {
 
   const selected = methods.find((m) => m.id === provider)
   const isBkash = selected?.id === 'manual-bkash'
+  const isDeferred = selected?.type === 'deferred'
 
   const validateBkash = (): string | null => {
     if (!isBkash) return null
@@ -98,7 +95,7 @@ export function CheckoutPaymentView() {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     } catch {
-      // ignore — clipboard may be unavailable
+      // ignore
     }
   }
 
@@ -199,17 +196,70 @@ export function CheckoutPaymentView() {
         </div>
       )}
 
-      {/* Manual payment instructions — receiver details + TrxID entry */}
-      {selected?.type === 'manual' && selected.receiver && (
+      {/* === DEFERRED (pay-on-contact) — the default flow ===
+          Customer places the order now. Admin contacts them to arrange
+          payment. Order is confirmed once payment is received. No payment
+          form, no receiver number — just a clear explainer + Place Order. */}
+      {selected && isDeferred && (
         <div
           className="alert alert-info"
-          style={{ padding: 14, marginBottom: 16 }}
+          style={{ padding: 16, marginBottom: 16, lineHeight: 1.6 }}
         >
+          <h3 style={{ margin: '0 0 8px', fontSize: 14, color: 'var(--c-brand-red)' }}>
+            How this works
+          </h3>
+          <ol style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#444' }}>
+            <li>
+              <strong>Place your order now</strong> — you won&apos;t be asked to pay
+              at this step. Just review and submit.
+            </li>
+            <li>
+              <strong>Our team contacts you</strong> within a few hours (usually
+              much faster during business hours) on the phone number or email you
+              provided at checkout.
+            </li>
+            <li>
+              <strong>Choose how to pay</strong> when we contact you — bKash, bank
+              transfer, or another method we offer.
+            </li>
+            <li>
+              <strong>Your order is confirmed</strong> once we receive your payment.
+              You&apos;ll get a confirmation update by email/SMS.
+            </li>
+          </ol>
+
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 12,
+              marginTop: 12,
+              paddingTop: 12,
+              borderTop: '1px dashed var(--c-line)',
+              fontSize: 11,
+              color: '#666',
+            }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <Clock size={12} /> Reply within hours
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <Phone size={12} /> By phone or email
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <ShieldCheck size={12} /> No payment until you confirm
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* === MANUAL (bKash / bank / WU) — only shown if admin enables one === */}
+      {selected?.type === 'manual' && selected.receiver && (
+        <div className="alert alert-info" style={{ padding: 14, marginBottom: 16 }}>
           <p style={{ fontWeight: 600, marginBottom: 8 }}>
             How to pay via {selected.label}:
           </p>
 
-          {/* Receiver block — where to send */}
           <div
             style={{
               background: '#fff',
@@ -245,7 +295,7 @@ export function CheckoutPaymentView() {
                   gap: 4,
                 }}
               >
-                {copied ? <><Check size={10} /> Copied</> : <><Copy size={10} /> Copy</>}
+                {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
             <div
@@ -267,7 +317,6 @@ export function CheckoutPaymentView() {
             )}
           </div>
 
-          {/* Amount to send */}
           <div
             style={{
               display: 'flex',
@@ -284,7 +333,6 @@ export function CheckoutPaymentView() {
             </strong>
           </div>
 
-          {/* bKash smart flow — sender number + TrxID */}
           {isBkash && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
@@ -345,7 +393,6 @@ export function CheckoutPaymentView() {
             </div>
           )}
 
-          {/* Non-bKash manual — single txnRef field */}
           {selected.type === 'manual' && !isBkash && (
             <div>
               <label

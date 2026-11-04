@@ -19,7 +19,7 @@ import { cached, cacheKey } from '@/lib/cache'
 import { tag, TTL as CACHE_TTL } from '@/lib/cache-tags'
 import { siteConfig } from '@/config/site'
 
-export type PaymentMethodType = 'manual' | 'online'
+export type PaymentMethodType = 'manual' | 'online' | 'deferred'
 
 export type PaymentMethodDef = {
   id: string
@@ -41,6 +41,13 @@ export type PaymentMethodDef = {
 // src/app/api/checkout/place-order/route.ts.
 export const ALL_PAYMENT_METHODS: PaymentMethodDef[] = [
   {
+    id: 'pay-on-contact',
+    label: 'Pay After We Contact You',
+    desc: 'Place your order now. Our team will contact you shortly to arrange payment. Your order is confirmed once payment is received.',
+    type: 'deferred',
+    defaultEnabled: true,
+  },
+  {
     id: 'manual-bkash',
     label: 'bKash (Personal)',
     desc: 'Send Money to our bKash number, enter your sender number + Transaction ID. We verify and confirm your order.',
@@ -50,7 +57,7 @@ export const ALL_PAYMENT_METHODS: PaymentMethodDef[] = [
       value: siteConfig.payments.bkashPersonalNumber,
       hint: "Use 'Send Money' (not 'Cash Out' or 'Make Payment'). Take a screenshot after sending — you'll need the Transaction ID.",
     },
-    defaultEnabled: true,
+    defaultEnabled: false,
   },
   {
     id: 'manual-bank',
@@ -89,8 +96,10 @@ export const ALL_PAYMENT_METHODS: PaymentMethodDef[] = [
 const SETTING_KEY = 'payment:enabled'
 
 // Default enabled set — used when no Setting row exists yet (fresh install).
-// Per the product owner's request: only bKash for now.
-const DEFAULT_ENABLED = ['manual-bkash']
+// Per the product owner's current direction: customers place the order first,
+// admin contacts them to arrange payment. bKash/bank/etc. stay in code but
+// disabled at checkout — admin can flip them on later from /admin/payment-methods.
+const DEFAULT_ENABLED = ['pay-on-contact']
 
 /** All methods with their current `enabled` flag (from Setting table). */
 export type PaymentMethodStatus = PaymentMethodDef & { enabled: boolean }

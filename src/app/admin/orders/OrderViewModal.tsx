@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, X, CheckCircle2, XCircle, Copy } from 'lucide-react'
+import { Eye, X, CheckCircle2, XCircle, Copy, Phone, Mail } from 'lucide-react'
 
 type Payment = {
   id: number
@@ -54,6 +54,7 @@ type OrderDetails = {
 }
 
 const PROVIDER_LABELS: Record<string, string> = {
+  'pay-on-contact': 'Pay After We Contact You',
   'manual-bkash': 'bKash (Personal)',
   'manual-bank': 'Bank Deposit',
   'manual-western-union': 'Western Union',
@@ -208,6 +209,68 @@ export function OrderViewModal({ orderNo }: { orderNo: string }) {
                   </span>
                   <span><strong>Date:</strong> {new Date(data.createdAt).toLocaleString()}</span>
                 </div>
+
+                {/* Contact Customer callout — prominent, only shown when
+                    the order is awaiting payment (admin needs to reach out) */}
+                {(data.status === 'AWAITING_PAYMENT' || data.status === 'PENDING') && (
+                  <div
+                    style={{
+                      marginBottom: 16,
+                      padding: 14,
+                      background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
+                      border: '1px solid #f59e0b',
+                      borderRadius: 6,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <Phone size={16} style={{ color: '#92400e' }} />
+                      <strong style={{ fontSize: 13, color: '#92400e', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        Contact Customer to Arrange Payment
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 13 }}>
+                      <a
+                        href={`tel:${data.invPhone1}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          background: '#fff',
+                          padding: '6px 12px',
+                          borderRadius: 4,
+                          textDecoration: 'none',
+                          color: '#1a1a2e',
+                          fontWeight: 700,
+                          border: '1px solid #f59e0b',
+                        }}
+                      >
+                        <Phone size={12} /> {data.invPhone1}
+                      </a>
+                      <a
+                        href={`mailto:${data.invEmail}?subject=Order%20${orderNo}%20-%20Payment%20Arrangements`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          background: '#fff',
+                          padding: '6px 12px',
+                          borderRadius: 4,
+                          textDecoration: 'none',
+                          color: '#1a1a2e',
+                          fontWeight: 700,
+                          border: '1px solid #f59e0b',
+                        }}
+                      >
+                        <Mail size={12} /> {data.invEmail}
+                      </a>
+                    </div>
+                    <p style={{ margin: '8px 0 0', fontSize: 11, color: '#92400e' }}>
+                      Customer chose <strong>&quot;Pay After We Contact You&quot;</strong>. Reach out
+                      to arrange payment (bKash / bank / etc.). Once payment is received, click{' '}
+                      <strong>&quot;Mark as Paid&quot;</strong> below.
+                    </p>
+                  </div>
+                )}
 
                 {/* Customer (Invoice) Info */}
                 <div style={{ marginBottom: 16 }}>
@@ -372,7 +435,9 @@ export function OrderViewModal({ orderNo }: { orderNo: string }) {
                           placeholder={
                             isBkash
                               ? 'e.g. "TrxID matched in bKash app, amount ৳1,250 received"'
-                              : 'e.g. "Bank deposit slip verified"'
+                              : payment?.provider === 'pay-on-contact'
+                                ? 'e.g. "Customer paid ৳1,250 via bKash to +88017XXX after phone call"'
+                                : 'e.g. "Bank deposit slip verified"'
                           }
                           style={{
                             width: '100%',
@@ -402,7 +467,7 @@ export function OrderViewModal({ orderNo }: { orderNo: string }) {
                               gap: 6,
                             }}
                           >
-                            <CheckCircle2 size={14} /> Verify Payment
+                            <CheckCircle2 size={14} /> {payment?.provider === 'pay-on-contact' ? 'Mark as Paid' : 'Verify Payment'}
                           </button>
                           <button
                             type="button"
