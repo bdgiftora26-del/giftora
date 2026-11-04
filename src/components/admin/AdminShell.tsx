@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { LayoutDashboard, Package, ShoppingCart, Image, FolderTree, DollarSign, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, Image, FolderTree, DollarSign, CreditCard, LogOut, Menu, X } from 'lucide-react'
 
 const NAV = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -12,6 +12,7 @@ const NAV = [
   { label: 'Home Sliders', href: '/admin/sliders', icon: Image },
   { label: 'Categories', href: '/admin/categories', icon: FolderTree },
   { label: 'Currencies', href: '/admin/currencies', icon: DollarSign },
+  { label: 'Payment Methods', href: '/admin/payment-methods', icon: CreditCard },
 ]
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

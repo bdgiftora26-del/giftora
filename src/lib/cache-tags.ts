@@ -47,6 +47,7 @@ export const tag = {
   adminOrders: () => 'admin:orders',
   adminBanners: () => 'admin:banners',
   currencies: () => 'currencies',
+  paymentMethods: () => 'payment-methods',
 } as const
 
 // ---- Invalidation helpers (call from admin mutation handlers) -------------
