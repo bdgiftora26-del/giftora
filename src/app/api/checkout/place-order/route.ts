@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { toNumber } from '@/lib/money'
 import { getCurrency } from '@/lib/currency'
 import { findPaymentMethod, getEnabledPaymentMethods } from '@/lib/payment-methods'
+import { bustOrder } from '@/lib/cache-tags'
 
 export const dynamic = 'force-dynamic'
 
@@ -367,6 +368,16 @@ export async function POST(req: Request) {
   // Clear checkout cookies
   store.delete('ub_invoice')
   store.delete('ub_delivery')
+
+  // Bust the admin orders + dashboard cache so the new order shows up
+  // immediately in /admin/orders and /admin. Without this, the admin sees
+  // a stale list for up to 5 min (the ORDER_LIST + ADMIN_DASHBOARD TTL).
+  // bustOrder() invalidates: orders, admin:orders, admin:dashboard.
+  try {
+    bustOrder()
+  } catch {
+    // best-effort — cache invalidation shouldn't block order placement
+  }
 
   return NextResponse.json({ ok: true, orderNo, redirect: isOnline })
 }
