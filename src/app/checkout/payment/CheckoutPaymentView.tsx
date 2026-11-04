@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart, useCurrency } from '@/components/providers'
 import { Price } from '@/components/Price'
 import Link from 'next/link'
-import { AlertCircle, Phone, Mail, Clock, ShieldCheck } from 'lucide-react'
+import { AlertCircle, Phone, Mail, Clock, ShieldCheck, Loader2, CheckCircle2 } from 'lucide-react'
 
 type ReceiverInfo = {
   label: string
@@ -41,11 +41,13 @@ export function CheckoutPaymentView() {
   const [txnRef, setTxnRef] = useState('')
   const [copied, setCopied] = useState(false)
 
-  // Ref flag: set to true right before we call cart.clear() + navigate to
-  // the complete page. Without this, the useEffect below sees the empty
-  // cart (after clear) and races our router.push — the user ends up at
-  // /cart instead of /checkout/complete/[orderNo].
-  const placingOrderRef = useRef(false)
+  // State flag: true while we're navigating to the thank-you page after a
+  // successful order placement. Using STATE (not a ref) so the component
+  // re-renders and shows a proper "Placing your order…" loading screen
+  // instead of going blank when cart.clear() empties the cart.
+  // Previously this was a ref — the render still hit `return null` after
+  // cart.clear(), producing a blank white flash before the thank-you page.
+  const [placingOrder, setPlacingOrder] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -71,12 +73,12 @@ export function CheckoutPaymentView() {
 
   useEffect(() => {
     // Skip the "empty cart" redirect when we're intentionally clearing
-    // the cart as part of order placement — otherwise this fires between
-    // cart.clear() and router.push('/checkout/complete/...'), stealing
-    // the navigation and sending the user to /cart instead.
-    if (placingOrderRef.current) return
+    // the cart as part of order placement. Without this check, the effect
+    // fires between cart.clear() and router.push('/checkout/complete/...'),
+    // stealing the navigation and sending the user to /cart instead.
+    if (placingOrder) return
     if (cart.items.length === 0) router.replace('/cart')
-  }, [cart.items.length, router])
+  }, [cart.items.length, router, placingOrder])
 
   const subtotalBdt = cart.items.reduce((s, i) => s + i.priceBdt * i.qty, 0)
 
@@ -135,9 +137,12 @@ export function CheckoutPaymentView() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to place order')
-      // Set the flag BEFORE clearing the cart so the empty-cart useEffect
-      // doesn't redirect to /cart. Clear it after navigation starts.
-      placingOrderRef.current = true
+      // Set placingOrder=true BEFORE cart.clear() so the component re-renders
+      // showing the "Placing your order…" loading screen (not a blank page)
+      // during the gap between cart.clear() and the thank-you page loading.
+      // React batches these state updates, so the re-render shows the loading
+      // state with an empty cart — exactly what we want.
+      setPlacingOrder(true)
       cart.clear()
       router.push(`/checkout/complete/${data.orderNo}`)
     } catch (err) {
@@ -145,6 +150,90 @@ export function CheckoutPaymentView() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // === ORDER PLACEMENT LOADING SCREEN ===
+  // Shown between the moment the order API returns success and the moment
+  // the thank-you page finishes loading. Without this, the sequence was:
+  //   1. setPlacingOrder(true) + cart.clear() → cart becomes empty
+  //   2. Component re-renders → hits `if (cart.items.length === 0) return null`
+  //   3. BLANK PAGE for 1-3 seconds while Next.js fetches the thank-you page
+  //   4. Thank-you page renders
+  // Now step 2 returns this loading screen instead of null.
+  if (placingOrder) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '80px 20px',
+          textAlign: 'center',
+          minHeight: 400,
+        }}
+      >
+        {/* Spinner — two-stage: green check (order confirmed) → blue spinner (loading page) */}
+        <div style={{ position: 'relative', width: 64, height: 64, marginBottom: 20 }}>
+          <CheckCircle2
+            size={64}
+            style={{
+              color: 'var(--c-green)',
+              position: 'absolute',
+              inset: 0,
+              animation: 'popIn 0.3s ease-out',
+            }}
+          />
+        </div>
+        <h2
+          style={{
+            fontSize: 20,
+            fontWeight: 800,
+            color: '#166534',
+            margin: '0 0 8px',
+          }}
+        >
+          Order Placed Successfully!
+        </h2>
+        <p
+          style={{
+            fontSize: 13,
+            color: '#666',
+            margin: '0 0 20px',
+            maxWidth: 360,
+            lineHeight: 1.5,
+          }}
+        >
+          We&apos;re preparing your order confirmation page. This will only take a moment…
+        </p>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 12,
+            color: '#999',
+          }}
+        >
+          <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} />
+          Loading…
+        </div>
+
+        {/* Inline keyframes — no external CSS needed. The spin animation is
+            the standard clockwise rotation; popIn is a quick scale+fade-in. */}
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+        `}</style>
+      </div>
+    )
   }
 
   if (cart.items.length === 0) return null
