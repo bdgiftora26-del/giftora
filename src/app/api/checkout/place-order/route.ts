@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { toNumber } from '@/lib/money'
 import { getCurrency } from '@/lib/currency'
+import { findPaymentMethod, getEnabledPaymentMethods } from '@/lib/payment-methods'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,17 +18,54 @@ type ClientItem = {
   priceBdt: number
 }
 
+// Validate bKash sender number (Bangladeshi mobile).
+const BKASH_NUMBER_RE = /^(?:\+?880|0)1[3-9]\d{8}$/
+// bKash TrxID — 8-16 alphanumeric.
+const BKASH_TRXID_RE = /^[A-Z0-9]{8,16}$/
+
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
-  const { provider, txnRef, items, couponCode } = body as {
+  const { provider, txnRef, items, couponCode, bkashSenderNumber } = body as {
     provider: string
     txnRef?: string
     items: ClientItem[]
     couponCode?: string
+    bkashSenderNumber?: string
   }
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
+  }
+
+  // Verify the chosen provider is currently enabled in admin settings.
+  // This prevents someone from POSTing a disabled method via direct API call.
+  const methodDef = findPaymentMethod(provider)
+  if (!methodDef) {
+    return NextResponse.json({ error: `Unknown payment method: ${provider}` }, { status: 400 })
+  }
+  const enabled = await getEnabledPaymentMethods()
+  if (!enabled.some((m) => m.id === provider)) {
+    return NextResponse.json(
+      { error: `Payment method ${methodDef.label} is currently disabled. Please choose another.` },
+      { status: 400 },
+    )
+  }
+
+  // bKash flow: require sender number + TrxID, validate format.
+  if (provider === 'manual-bkash') {
+    if (!bkashSenderNumber || !BKASH_NUMBER_RE.test(bkashSenderNumber.trim())) {
+      return NextResponse.json(
+        { error: 'Please enter a valid bKash sender number (01XXXXXXXXX or +8801XXXXXXXXX).' },
+        { status: 400 },
+      )
+    }
+    const trxid = (txnRef || '').trim().toUpperCase()
+    if (!trxid || !BKASH_TRXID_RE.test(trxid)) {
+      return NextResponse.json(
+        { error: 'Please enter a valid bKash Transaction ID (8-16 alphanumeric characters).' },
+        { status: 400 },
+      )
+    }
   }
 
   const store = await cookies()
@@ -164,8 +202,18 @@ export async function POST(req: Request) {
         },
       })
 
-      // 7. Payment record
+      // 7. Payment record — store bKash sender number + TrxID in `raw` (JSON).
       const isOnline = provider === 'sslcommerz'
+      const paymentRaw = bkashSenderNumber
+        ? JSON.stringify({
+            senderNumber: bkashSenderNumber.trim(),
+            methodKind: 'bkash-personal',
+            expectedAmountBdt: totalBdt,
+          })
+        : null
+      // Normalize TrxID to uppercase for bKash (case-insensitive match later).
+      const normalizedTxnRef =
+        provider === 'manual-bkash' ? (txnRef || '').trim().toUpperCase() : (txnRef || null)
       await tx.payment.create({
         data: {
           orderId: order.id,
@@ -174,7 +222,8 @@ export async function POST(req: Request) {
           amount: totalBdt,
           currency: currency.code,
           status: isOnline ? 'PAID' : 'AWAITING_VERIFICATION',
-          txnRef: txnRef || null,
+          txnRef: normalizedTxnRef,
+          raw: paymentRaw,
         },
       })
 

@@ -24,6 +24,25 @@ export const siteConfig = {
   currencies: ['USD', 'AUD', 'GBP', 'CAD', 'EUR', 'INR', 'SGD'] as const,
   locales: ['en', 'bn'] as const,
   defaultLocale: 'en',
+  // Manual payment receivers — shown to customers at checkout so they know
+  // where to send money. Override at runtime via the `site:settings` row in
+  // the Setting table (JSON) if you want to change without redeploying.
+  payments: {
+    bkashPersonalNumber: '+8801719818182',
+    bkashMerchantNumber: '', // leave empty if not used
+    bankAccount: {
+      name: 'BDGiftora',
+      bank: 'Dutch-Bangla Bank',
+      branch: 'Mirpur 1, Dhaka',
+      account: '0000000000000000',
+      swift: 'DBBLBDDH',
+    },
+    westernUnion: {
+      beneficiaryName: 'BDGiftora',
+      city: 'Dhaka',
+      country: 'Bangladesh',
+    },
+  },
   social: {
     facebook: 'https://facebook.com',
     twitter: 'https://twitter.com',

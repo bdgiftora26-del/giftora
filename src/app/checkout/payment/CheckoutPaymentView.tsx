@@ -5,42 +5,67 @@ import { useRouter } from 'next/navigation'
 import { useCart, useCurrency } from '@/components/providers'
 import { Price } from '@/components/Price'
 import Link from 'next/link'
+import { ChevronDown, Copy, Check, AlertCircle } from 'lucide-react'
 
-const PROVIDERS = [
-  {
-    id: 'manual-bank',
-    label: 'Bank Deposit',
-    desc: 'Transfer to our bank account and upload the deposit slip. We verify and confirm your order.',
-    type: 'manual',
-  },
-  {
-    id: 'manual-bkash',
-    label: 'bKash (Personal)',
-    desc: 'Send money to our personal bKash number and enter the transaction ID.',
-    type: 'manual',
-  },
-  {
-    id: 'manual-western-union',
-    label: 'Western Union',
-    desc: 'Send via Western Union and upload the receipt.',
-    type: 'manual',
-  },
-  {
-    id: 'sslcommerz',
-    label: 'Online Card (SSLCommerz)',
-    desc: 'Pay instantly with Visa/MasterCard via SSLCommerz (simulated in demo).',
-    type: 'online',
-  },
-]
+type ReceiverInfo = {
+  label: string
+  value: string
+  hint?: string
+}
+
+type PaymentMethod = {
+  id: string
+  label: string
+  desc: string
+  type: 'manual' | 'online'
+  receiver?: ReceiverInfo
+}
+
+// Validate a Bangladeshi phone number (bKash sender).
+// Accepts: 01XXXXXXXXX, +8801XXXXXXXXX, 8801XXXXXXXXX
+const BKASH_NUMBER_RE = /^(?:\+?880|0)1[3-9]\d{8}$/
+
+// bKash Transaction IDs are typically 10 alphanumeric chars.
+const BKASH_TRXID_RE = /^[A-Z0-9]{8,16}$/
 
 export function CheckoutPaymentView() {
   const cart = useCart()
   const { currency } = useCurrency()
   const router = useRouter()
-  const [provider, setProvider] = useState('manual-bank')
-  const [txnRef, setTxnRef] = useState('')
+
+  const [methods, setMethods] = useState<PaymentMethod[]>([])
+  const [methodsLoading, setMethodsLoading] = useState(true)
+  const [provider, setProvider] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // bKash-specific fields
+  const [bkashSender, setBkashSender] = useState('')
+  const [txnRef, setTxnRef] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  // Load enabled payment methods from /api/payment-methods
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/payment-methods')
+        const data = await res.json()
+        if (cancelled) return
+        const list: PaymentMethod[] = data.methods || []
+        setMethods(list)
+        if (list.length > 0 && !provider) setProvider(list[0].id)
+      } catch {
+        if (!cancelled) setMethods([])
+      } finally {
+        if (!cancelled) setMethodsLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (cart.items.length === 0) router.replace('/cart')
@@ -48,39 +73,70 @@ export function CheckoutPaymentView() {
 
   const subtotalBdt = cart.items.reduce((s, i) => s + i.priceBdt * i.qty, 0)
 
+  const selected = methods.find((m) => m.id === provider)
+  const isBkash = selected?.id === 'manual-bkash'
+
+  const validateBkash = (): string | null => {
+    if (!isBkash) return null
+    const num = bkashSender.trim()
+    if (!num) return 'Please enter your bKash sender number.'
+    if (!BKASH_NUMBER_RE.test(num)) {
+      return 'Enter a valid Bangladeshi mobile number (e.g. 01XXXXXXXXX or +8801XXXXXXXXX).'
+    }
+    const trx = txnRef.trim()
+    if (!trx) return 'Please enter the bKash Transaction ID (TrxID).'
+    if (!BKASH_TRXID_RE.test(trx.toUpperCase())) {
+      return 'Transaction ID should be 8-16 alphanumeric characters (from your bKash confirmation SMS).'
+    }
+    return null
+  }
+
+  const copyReceiver = async () => {
+    if (!selected?.receiver) return
+    try {
+      await navigator.clipboard.writeText(selected.receiver.value)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // ignore — clipboard may be unavailable
+    }
+  }
+
   const onPay = async () => {
     setError('')
+    const verr = validateBkash()
+    if (verr) {
+      setError(verr)
+      return
+    }
     setLoading(true)
     try {
+      const payload: Record<string, unknown> = {
+        provider,
+        txnRef: txnRef.trim() || undefined,
+        items: cart.items,
+        couponCode: cart.couponCode,
+      }
+      if (isBkash) {
+        payload.bkashSenderNumber = bkashSender.trim()
+      }
       const res = await fetch('/api/checkout/place-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider,
-          txnRef: txnRef || undefined,
-          items: cart.items,
-          couponCode: cart.couponCode,
-        }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed')
+      if (!res.ok) throw new Error(data.error || 'Failed to place order')
       cart.clear()
-      if (data.redirect) {
-        // Simulated online provider — go straight to complete
-        router.push(`/checkout/complete/${data.orderNo}`)
-      } else {
-        router.push(`/checkout/complete/${data.orderNo}`)
-      }
+      router.push(`/checkout/complete/${data.orderNo}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed')
+      setError(err instanceof Error ? err.message : 'Failed to place order')
     } finally {
       setLoading(false)
     }
   }
 
   if (cart.items.length === 0) return null
-
-  const selected = PROVIDERS.find((p) => p.id === provider)!
 
   return (
     <div>
@@ -91,58 +147,238 @@ export function CheckoutPaymentView() {
         </div>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
-
-      <h3 className="form-section-title">Select Payment Method</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-        {PROVIDERS.map((p) => (
-          <label
-            key={p.id}
-            className="privacy-check"
-            style={{
-              border: `1px solid ${provider === p.id ? 'var(--c-green)' : 'var(--c-line)'}`,
-              padding: 10,
-              cursor: 'pointer',
-              background: provider === p.id ? 'var(--c-green-soft)' : '#fff',
-            }}
-          >
-            <input
-              type="radio"
-              name="provider"
-              value={p.id}
-              checked={provider === p.id}
-              onChange={() => setProvider(p.id)}
-            />
-            <span>
-              <strong>{p.label}</strong>
-              <br />
-              <span className="muted" style={{ fontSize: 11 }}>{p.desc}</span>
-            </span>
-          </label>
-        ))}
-      </div>
-
-      {selected.type === 'manual' && (
-        <div className="alert alert-info">
-          <p style={{ fontWeight: 600, marginBottom: 6 }}>How to pay via {selected.label}:</p>
-          <ol style={{ margin: 0, paddingLeft: 18, fontSize: 12 }}>
-            <li>Place your order below — you&apos;ll get an order number.</li>
-            <li>Send the payment to the details shown on the confirmation page.</li>
-            <li>Upload your deposit slip / enter transaction ID in your account or track-order page.</li>
-            <li>We verify and mark your order as paid (usually within a few hours).</li>
-          </ol>
-          <div className="checkout-form-row mt-2" style={{ marginLeft: 0 }}>
-            <label style={{ width: 'auto', textAlign: 'left' }}>Transaction ID (optional now)</label>
-            <input
-              value={txnRef}
-              onChange={(e) => setTxnRef(e.target.value)}
-              placeholder="e.g. bKash TXN123456"
-              style={{ maxWidth: 240 }}
-            />
-          </div>
+      {error && (
+        <div className="alert alert-error" style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+          <AlertCircle size={14} style={{ marginTop: 2, flexShrink: 0 }} />
+          <span>{error}</span>
         </div>
       )}
 
+      <h3 className="form-section-title">Select Payment Method</h3>
+
+      {methodsLoading ? (
+        <p className="muted" style={{ fontSize: 12 }}>Loading payment methods…</p>
+      ) : methods.length === 0 ? (
+        <div className="alert alert-error">
+          No payment methods are currently enabled. Please contact us to complete your order.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+          {methods.map((m) => (
+            <label
+              key={m.id}
+              className="privacy-check"
+              style={{
+                border: `1px solid ${provider === m.id ? 'var(--c-green)' : 'var(--c-line)'}`,
+                padding: 10,
+                cursor: 'pointer',
+                background: provider === m.id ? 'var(--c-green-soft)' : '#fff',
+                display: 'flex',
+                gap: 8,
+                alignItems: 'flex-start',
+              }}
+            >
+              <input
+                type="radio"
+                name="provider"
+                value={m.id}
+                checked={provider === m.id}
+                onChange={() => {
+                  setProvider(m.id)
+                  setError('')
+                }}
+                style={{ marginTop: 3 }}
+              />
+              <span>
+                <strong>{m.label}</strong>
+                <br />
+                <span className="muted" style={{ fontSize: 11 }}>{m.desc}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+
+      {/* Manual payment instructions — receiver details + TrxID entry */}
+      {selected?.type === 'manual' && selected.receiver && (
+        <div
+          className="alert alert-info"
+          style={{ padding: 14, marginBottom: 16 }}
+        >
+          <p style={{ fontWeight: 600, marginBottom: 8 }}>
+            How to pay via {selected.label}:
+          </p>
+
+          {/* Receiver block — where to send */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid var(--c-line)',
+              borderRadius: 4,
+              padding: 10,
+              marginBottom: 10,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 4,
+              }}
+            >
+              <strong style={{ fontSize: 11, color: '#666', textTransform: 'uppercase' }}>
+                {selected.receiver.label}
+              </strong>
+              <button
+                type="button"
+                onClick={copyReceiver}
+                style={{
+                  background: 'none',
+                  border: '1px solid var(--c-line)',
+                  borderRadius: 3,
+                  padding: '2px 8px',
+                  fontSize: 10,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                {copied ? <><Check size={10} /> Copied</> : <><Copy size={10} /> Copy</>}
+              </button>
+            </div>
+            <div
+              style={{
+                fontFamily: 'ui-monospace, Menlo, monospace',
+                fontSize: 14,
+                fontWeight: 700,
+                color: 'var(--c-brand-red)',
+                whiteSpace: 'pre-line',
+                lineHeight: 1.5,
+              }}
+            >
+              {selected.receiver.value}
+            </div>
+            {selected.receiver.hint && (
+              <p style={{ marginTop: 8, fontSize: 11, color: '#666', marginBottom: 0 }}>
+                💡 {selected.receiver.hint}
+              </p>
+            )}
+          </div>
+
+          {/* Amount to send */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '6px 0',
+              fontSize: 13,
+              borderBottom: '1px dashed var(--c-line)',
+              marginBottom: 10,
+            }}
+          >
+            <span>Amount to send:</span>
+            <strong style={{ fontSize: 16 }}>
+              <Price bdt={subtotalBdt} />
+            </strong>
+          </div>
+
+          {/* bKash smart flow — sender number + TrxID */}
+          {isBkash && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div>
+                <label
+                  htmlFor="bkash-sender"
+                  style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}
+                >
+                  Your bKash Number (sender) <span style={{ color: 'var(--c-brand-red)' }}>*</span>
+                </label>
+                <input
+                  id="bkash-sender"
+                  value={bkashSender}
+                  onChange={(e) => setBkashSender(e.target.value)}
+                  placeholder="01XXXXXXXXX"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  style={{
+                    width: '100%',
+                    maxWidth: 280,
+                    padding: '6px 8px',
+                    border: '1px solid var(--c-line)',
+                    borderRadius: 3,
+                    fontSize: 13,
+                  }}
+                />
+                <p style={{ fontSize: 11, color: '#666', marginTop: 4, marginBottom: 0 }}>
+                  The bKash number you sent the money <em>from</em>. We&apos;ll match it against our records.
+                </p>
+              </div>
+              <div>
+                <label
+                  htmlFor="bkash-trxid"
+                  style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}
+                >
+                  bKash Transaction ID (TrxID) <span style={{ color: 'var(--c-brand-red)' }}>*</span>
+                </label>
+                <input
+                  id="bkash-trxid"
+                  value={txnRef}
+                  onChange={(e) => setTxnRef(e.target.value)}
+                  placeholder="e.g. 9X7K5P3B2N"
+                  autoComplete="off"
+                  style={{
+                    width: '100%',
+                    maxWidth: 280,
+                    padding: '6px 8px',
+                    border: '1px solid var(--c-line)',
+                    borderRadius: 3,
+                    fontSize: 13,
+                    fontFamily: 'ui-monospace, Menlo, monospace',
+                    textTransform: 'uppercase',
+                  }}
+                />
+                <p style={{ fontSize: 11, color: '#666', marginTop: 4, marginBottom: 0 }}>
+                  Found in your bKash confirmation SMS or app &quot;Transactions&quot; tab.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Non-bKash manual — single txnRef field */}
+          {selected.type === 'manual' && !isBkash && (
+            <div>
+              <label
+                htmlFor="txn-ref"
+                style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}
+              >
+                Reference / Slip Number
+              </label>
+              <input
+                id="txn-ref"
+                value={txnRef}
+                onChange={(e) => setTxnRef(e.target.value)}
+                placeholder="Deposit slip or transfer reference"
+                style={{
+                  width: '100%',
+                  maxWidth: 280,
+                  padding: '6px 8px',
+                  border: '1px solid var(--c-line)',
+                  borderRadius: 3,
+                  fontSize: 13,
+                }}
+              />
+            </div>
+          )}
+
+          <p style={{ marginTop: 10, marginBottom: 0, fontSize: 11, color: '#666' }}>
+            After placing the order, our team will verify your payment (usually within a few hours)
+            and confirm it. You&apos;ll receive an email update.
+          </p>
+        </div>
+      )}
+
+      {/* Order Summary */}
       <h3 className="form-section-title">Order Summary</h3>
       <div className="cart-totals" style={{ maxWidth: 'none' }}>
         {cart.items.map((item) => (
@@ -164,8 +400,13 @@ export function CheckoutPaymentView() {
         <Link href="/checkout/delivery" className="btn-orange">
           « Back
         </Link>
-        <button type="button" className="btn-green" onClick={onPay} disabled={loading}>
-          {loading ? 'Placing order…' : selected.type === 'online' ? 'Pay Now' : 'Place Order'}
+        <button
+          type="button"
+          className="btn-green"
+          onClick={onPay}
+          disabled={loading || methods.length === 0}
+        >
+          {loading ? 'Placing order…' : selected?.type === 'online' ? 'Pay Now' : 'Place Order'}
         </button>
       </div>
     </div>

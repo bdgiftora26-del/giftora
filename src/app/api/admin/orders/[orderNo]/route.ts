@@ -61,12 +61,28 @@ export async function GET(_req: Request, { params }: { params: Promise<{ orderNo
         qty: it.qty,
         cakeMessage: it.cakeMessage,
       })),
-      payments: order.payments.map((p) => ({
-        provider: p.provider,
-        amount: toNumber(p.amount),
-        status: p.status,
-        txnRef: p.txnRef,
-      })),
+      payments: order.payments.map((p) => {
+        // Parse the `raw` JSON (bKash sender number etc.) for admin display.
+        let raw: Record<string, unknown> = {}
+        try {
+          raw = p.raw ? JSON.parse(p.raw) : {}
+        } catch {
+          raw = {}
+        }
+        return {
+          id: p.id,
+          provider: p.provider,
+          method: p.method,
+          amount: toNumber(p.amount),
+          currency: p.currency,
+          status: p.status,
+          txnRef: p.txnRef,
+          senderNumber: raw.senderNumber || null,
+          methodKind: raw.methodKind || null,
+          expectedAmountBdt: raw.expectedAmountBdt || null,
+          createdAt: p.createdAt,
+        }
+      }),
     },
   })
 }
