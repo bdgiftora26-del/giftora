@@ -65,6 +65,12 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   color: #fff;
   font-size: 13px;
   border-bottom: 1px solid rgba(0,0,0,0.15);
+  /* Establish a stacking context ABOVE .main-nav (z-index: 100) so the
+     currency dropdown menu can overlap the header + nav when open.
+     Without this, the dropdown (z-index 50 inside the topbar wrapper)
+     falls behind the sticky main-nav (z-index 100). */
+  position: relative;
+  z-index: 200;
 }
 .topbar-inner {
   max-width: var(--content-width);

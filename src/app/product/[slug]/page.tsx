@@ -16,10 +16,48 @@ export const revalidate = 1800 // 30 min — matches PRODUCT_DETAIL TTL
 const LOCALE = 'en'
 
 
-// Static metadata (no DB query at build time — avoids Vercel build failures)
-export const metadata: Metadata = {
-  title: 'Product — BDGiftora.com',
-  description: 'Send gifts to Bangladesh. Serving since 2004.',
+// Per-product metadata — generated from the DB row so each product page
+// has its own title + description for SEO + social sharing. Falls back to
+// the product name + auto-generated description if the admin didn't set
+// custom metaTitle/metaDescription.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params
+  try {
+    const result = await cached(
+      `product:${slug}`,
+      [tag.product(slug), tag.products()],
+      CACHE_TTL.PRODUCT_DETAIL,
+      () => loadProductDetail(slug),
+    )
+    if (!result) {
+      return { title: 'Product — BDGiftora.com' }
+    }
+    const { product } = result
+    const i18n = product.i18n[0]
+    const name = i18n?.name || product.slug
+    const metaTitle = i18n?.metaTitle || `${name} — BDGiftora.com`
+    const metaDescription =
+      i18n?.metaDescription ||
+      i18n?.shortDescription?.split('|')[0] ||
+      `Order ${name} online for gift delivery in Bangladesh. BDGiftora.com.`
+    return {
+      title: metaTitle,
+      description: metaDescription,
+      openGraph: {
+        title: metaTitle,
+        description: metaDescription,
+        images: product.images[0]
+          ? [{ url: product.images[0].url, alt: name }]
+          : undefined,
+      },
+    }
+  } catch {
+    return { title: 'Product — BDGiftora.com' }
+  }
 }
 
 // All DB work for this page, cached per-slug (30 min). Invalidation:
@@ -221,6 +259,16 @@ export default async function ProductPage({
             <span className="product-info-label">Product Code:</span>
             <span>{product.sku}</span>
           </div>
+          {product.weightGrams != null && product.weightGrams > 0 && (
+            <div className="product-info-row">
+              <span className="product-info-label">Weight:</span>
+              <span>
+                {product.weightGrams >= 1000
+                  ? `${(product.weightGrams / 1000).toFixed(product.weightGrams % 1000 === 0 ? 0 : 2)} kg`
+                  : `${product.weightGrams} g`}
+              </span>
+            </div>
+          )}
 
           <AddToBasket
             productId={product.id}
