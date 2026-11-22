@@ -2,15 +2,11 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { useState, useEffect, useRef } from 'react'
-import { Search } from 'lucide-react'
-import { useCart, useCurrency, useT } from '@/components/providers'
+import { useState, useEffect } from 'react'
+import { useCart, useCurrency } from '@/components/providers'
 
-type Suggestion = { slug: string; name: string; priceBdt: number; image: string }
-
-// WhatsApp + Viber + Phone icons — matching the reference screenshot's
-// left-side contact cluster. Inlined as SVGs so we don't need icon deps.
+// WhatsApp icon — the header's single contact CTA. Inlined as SVG so we
+// don't need an icon dependency for one glyph.
 function WhatsAppIcon({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -18,26 +14,12 @@ function WhatsAppIcon({ size = 16 }: { size?: number }) {
     </svg>
   )
 }
-function ViberIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M11.4.034C9.473.084 5.33.388 3.015 2.526 1.298 4.235.697 6.815.632 10.13c-.06 3.297-.13 9.396 5.05 11.05v2.454s-.04.99.617 1.19c.78.265 1.237-.503 1.237-.503l.034-2.58c4.18.81 7.814.62 8.61.45 1.81-.45 2.81-1.5 3.39-3.51.61-2.16.51-6.49.51-6.49s.18-3.51-.27-5.06C19.7 4.42 18.4 3.32 16.5 2.66c-2.31-.84-5.1-.63-5.1-.63zm.21 1.62c1.89-.06 4.36.21 6.13 1.38 1.49.98 2.04 2.66 2.1 5.04.06 2.37.12 5.06-.27 6.4-.39 1.34-1.14 2.28-2.55 2.67-1.41.39-4.69.51-7.62-.27-.21-.06-.45-.12-.66-.24l-.03 3.06c-.06.18-.21.27-.39.21-.18-.06-.24-.24-.21-.42v-3.03c-2.04-.78-3.27-2.04-3.78-3.81-.51-1.77-.51-5.04-.45-7.2.06-2.16.61-4.17 2.16-5.49 1.55-1.32 4.5-1.62 6.39-1.68zm-.27 3.09c-.27 0-.27.39 0 .42 1.62.12 2.49.81 2.64 2.55.03.27.42.24.39-.03-.15-2.04-1.29-2.94-3.03-2.94zm-.66 1.02c-.27 0-.27.39 0 .42 1.17.09 1.71.66 1.77 1.83.03.27.42.24.39-.03-.06-1.41-.81-2.16-2.16-2.22zm-3.18 1.08c-.42-.06-.84.03-1.17.33-.51.48-.54 1.26-.21 1.86.18.33.51.51.84.45.36-.06.6-.39.66-.81.06-.39.27-.69.57-.96.24-.21.21-.48-.03-.6-.21-.12-.45-.21-.66-.27zm.33.66c.12 0 .24.06.33.15.12.12.15.27.06.42-.06.15-.21.24-.36.18-.15-.06-.24-.21-.18-.36.03-.12.09-.21.18-.24-.03-.12-.03-.15-.03-.15zm1.05 1.35c-.12.15-.33.18-.48.06-.15-.12-.18-.33-.06-.48.12-.15.33-.18.48-.06.15.12.18.33.06.48zm-.6 1.17c-.06.09-.18.12-.27.06-.09-.06-.12-.18-.06-.27.06-.09.18-.12.27-.06.09.06.12.18.06.27zm.99-.15c-.06.09-.18.12-.27.06-.09-.06-.12-.18-.06-.27.06-.09.18-.12.27-.06.09.06.12.18.06.27zm.69.81c-.06.09-.18.12-.27.06-.09-.06-.12-.18-.06-.27.06-.09.18-.12.27-.06.09.06.12.18.06.27zm1.59.12c-.18.06-.36 0-.42-.18-.06-.18 0-.36.18-.42.18-.06.36 0 .42.18.06.18 0 .36-.18.42zm.78-.21c-.12.03-.24-.03-.27-.15-.03-.12.03-.24.15-.27.12-.03.24.03.27.15.03.12-.03.24-.15.27zm-.06-1.02c-.09.03-.21-.03-.24-.12-.03-.09.03-.21.12-.24.09-.03.21.03.24.12.03.09-.03.21-.12.24zm.99-.33c-.06.15-.21.24-.36.18-.15-.06-.24-.21-.18-.36.06-.15.21-.24.36-.18.15.06.24.21.18.36zm.81-.18c-.06.15-.21.21-.36.15-.15-.06-.21-.21-.15-.36.06-.15.21-.21.36-.15.15.06.21.21.15.36zm-.18-1.08c-.12.06-.27.03-.33-.09-.06-.12-.03-.27.09-.33.12-.06.27-.03.33.09.06.12.03.27-.09.33zm-.99-1.08c-.15.06-.27.03-.36-.09-.06-.12-.03-.27.09-.33.12-.06.27-.03.33.09.06.12.03.27-.06.33z"/>
-    </svg>
-  )
-}
 
 export function Header() {
-  const t = useT()
-  const router = useRouter()
   const cart = useCart()
   const { currency } = useCurrency()
-  const [q, setQ] = useState('')
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(-1)
   const [count, setCount] = useState(0)
   const [subtotal, setSubtotal] = useState(0)
-  const searchRef = useRef<HTMLDivElement>(null)
 
   // Track cart count + subtotal for the right-side cart info block
   useEffect(() => {
@@ -50,64 +32,10 @@ export function Header() {
     return () => window.removeEventListener('ub-cart-change', update)
   }, [cart])
 
-  const onSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (q.trim()) {
-      setShowSuggestions(false)
-      router.push(`/search?q=${encodeURIComponent(q.trim())}`)
-    }
-  }
-
-  useEffect(() => {
-    if (q.trim().length < 2) {
-      setSuggestions([])
-      setShowSuggestions(false)
-      return
-    }
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q.trim())}&limit=6`)
-        const data = await res.json()
-        setSuggestions(data.products || [])
-        setShowSuggestions(true)
-      } catch {
-        setSuggestions([])
-      }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [q])
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  function onKeyDown(e: React.KeyboardEvent) {
-    if (!showSuggestions || suggestions.length === 0) return
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setActiveIndex((i) => Math.max(i - 1, -1))
-    } else if (e.key === 'Enter' && activeIndex >= 0) {
-      e.preventDefault()
-      router.push(`/product/${suggestions[activeIndex].slug}`)
-      setShowSuggestions(false)
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false)
-    }
-  }
-
   return (
     <header className="site-header">
       <div className="header-inner">
-        {/* === LEFT: logo + tagline + social + phone === */}
+        {/* === LEFT: logo + WhatsApp CTA === */}
         <div className="header-left">
           <Link href="/" className="logo-block" aria-label="BDGiftora.com — Home">
             <Image

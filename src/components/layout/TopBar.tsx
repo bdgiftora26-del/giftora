@@ -76,30 +76,169 @@ function CurrencyDropdown() {
 // Compact search widget — sits in the blue top bar, right after the
 // currency dropdown. Matches the reference screenshot: white input + blue
 // square button with magnifying glass, joined as one widget.
+//
+// Dynamic behaviour: as the user types, a debounced (250 ms) request goes
+// to /api/search and a dropdown of matching products appears below the
+// input, with a small spinner while the request is in-flight. Keyboard
+// navigation (↑/↓/Enter/Esc) is supported. Clicking outside closes the
+// dropdown. Submitting the form (Enter on the input, or clicking the
+// magnifier) goes to the full search results page.
+type Suggestion = {
+  slug: string
+  name: string
+  priceBdt: number
+  salePriceBdt: number | null
+  image: string
+}
+
 function TopBarSearch() {
   const router = useRouter()
   const [q, setQ] = useState('')
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [show, setShow] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [active, setActive] = useState(-1)
+  const ref = useRef<HTMLDivElement>(null)
+
+  // Debounced fetch — fires 250 ms after the last keystroke. A guard
+  // (reqSeq) makes sure a slow earlier response can't overwrite a newer
+  // one (race condition).
+  useEffect(() => {
+    const query = q.trim()
+    if (query.length < 2) {
+      setSuggestions([])
+      setShow(false)
+      setLoading(false)
+      setActive(-1)
+      return
+    }
+    setLoading(true)
+    const seq = ++reqSeq
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=8`)
+        const data = await res.json()
+        // Stale-response guard — discard if a newer request started.
+        if (seq !== reqSeq) return
+        setSuggestions(data.products || [])
+        setShow(true)
+        setLoading(false)
+        setActive(-1)
+      } catch {
+        if (seq !== reqSeq) return
+        setSuggestions([])
+        setLoading(false)
+      }
+    }, 250)
+    return () => clearTimeout(timer)
+  }, [q])
+
+  // Close the dropdown when clicking outside it.
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setShow(false)
+      }
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [])
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    if (q.trim()) router.push(`/search?q=${encodeURIComponent(q.trim())}`)
+    if (q.trim()) {
+      setShow(false)
+      router.push(`/search?q=${encodeURIComponent(q.trim())}`)
+    }
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!show || suggestions.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActive((i) => Math.min(i + 1, suggestions.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActive((i) => Math.max(i - 1, -1))
+    } else if (e.key === 'Enter' && active >= 0) {
+      e.preventDefault()
+      router.push(`/product/${suggestions[active].slug}`)
+      setShow(false)
+    } else if (e.key === 'Escape') {
+      setShow(false)
+      setActive(-1)
+    }
   }
 
   return (
-    <form className="topbar-search" onSubmit={onSearch} role="search">
-      <input
-        type="search"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="search this site"
-        aria-label="Search"
-      />
-      <button type="submit" aria-label="Search">
-        <Search size={14} />
-      </button>
-    </form>
+    <div className="topbar-search" ref={ref}>
+      <form onSubmit={onSearch} role="search" style={{ display: 'flex' }}>
+        <input
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onFocus={() => suggestions.length > 0 && setShow(true)}
+          onKeyDown={onKeyDown}
+          placeholder="search this site"
+          aria-label="Search"
+          aria-expanded={show}
+          aria-autocomplete="list"
+          autoComplete="off"
+        />
+        <button type="submit" aria-label="Search">
+          {loading ? <Spinner /> : <Search size={14} />}
+        </button>
+      </form>
+
+      {show && (loading || suggestions.length > 0) && (
+        <div className="topbar-search-dropdown" role="listbox">
+          {loading && suggestions.length === 0 && (
+            <div className="topbar-search-loading">
+              <Spinner /> <span>Searching…</span>
+            </div>
+          )}
+          {suggestions.map((s, i) => (
+            <a
+              key={s.slug}
+              href={`/product/${s.slug}`}
+              className={`topbar-search-item ${i === active ? 'topbar-search-item-active' : ''}`}
+              onMouseEnter={() => setActive(i)}
+              role="option"
+              aria-selected={i === active}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={s.image}
+                alt=""
+                width={32}
+                height={32}
+                loading="lazy"
+                onError={(e) => {
+                  ;(e.currentTarget as HTMLImageElement).src = '/placeholders/products/generic-01.svg'
+                }}
+              />
+              <span className="topbar-search-item-name">{s.name}</span>
+              <span className="topbar-search-item-price">
+                {(s.salePriceBdt ?? s.priceBdt).toFixed(0)} ৳
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
+
+// Tiny inline spinner — shown in the search button and the loading row.
+// A CSS-only spinner avoids a heavy icon dependency and animates smoothly.
+function Spinner() {
+  return <span className="topbar-search-spinner" aria-hidden="true" />
+}
+
+// Shared sequence counter lives at module scope so every TopBarSearch
+// instance increments the same guard. (There's only one instance in the
+// app, but a module-scoped counter is simplest and avoids stale closures.)
+let reqSeq = 0
 
 export function TopBar() {
   const t = useT()
