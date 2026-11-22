@@ -277,6 +277,34 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
   text-align: right;
 }
+
+/* Brand slogan in the centre of the header — fills the space between the
+   logo/WhatsApp block (left) and the welcome/cart block (right). Uses a
+   pink-to-purple gradient (the two brand colours) so it reads as part of
+   the brand identity, not a dead label. Hidden on small screens to keep
+   the header uncluttered on mobile. */
+.header-slogan {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 0 16px;
+  min-width: 0;
+}
+.header-slogan-text {
+  background: linear-gradient(90deg, var(--c-brand-red) 0%, var(--c-brand-blue) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--c-brand-red);
+  font-size: clamp(15px, 1.8vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
 .header-welcome {
   font-size: 13px; color: #444;
   display: flex; align-items: center; gap: 8px;
@@ -445,8 +473,8 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   color: var(--c-brand-red); background: #fff5f5; text-decoration: none;
 }
 .sidebar-subarrow {
-  color: var(--c-brand-red); font-weight: 700; font-size: 12px;
-  flex-shrink: 0;
+  color: var(--c-brand-red); font-weight: 700; font-size: 14px;
+  display: inline-flex; width: 16px; justify-content: center; flex-shrink: 0;
 }
 .sidebar-currency { padding: 10px 12px; border-top: 2px solid var(--c-brand-red); }
 .sidebar-currency-label { display: block; font-size: 11px; color: var(--c-text-soft); margin-bottom: 4px; }
@@ -794,6 +822,19 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   .header-right { width: 100%; align-items: stretch; }
   .header-cart-summary { display: none; }
   .search-form { min-width: 0; width: 100%; }
+
+  /* Slogan — on mobile, span full width on its own line below the logo
+     row, smaller font, still gradient. Keeps the brand visible without
+     crowding the logo + cart row. */
+  .header-slogan {
+    flex: 1 1 100%;
+    order: 5;
+    padding: 4px 6px;
+  }
+  .header-slogan-text {
+    font-size: clamp(13px, 4vw, 16px);
+    white-space: normal;
+  }
 
   /* Nav */
   .main-nav-list { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }

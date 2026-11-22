@@ -96,7 +96,7 @@ export function Sidebar({
                       {c.children!.map((sub) => (
                         <li key={sub.id}>
                           <Link href={sub.href} className="sidebar-subitem">
-                            <span className="sidebar-subarrow">·</span>
+                            <span className="sidebar-subarrow">›</span>
                             <span>{sub.name}</span>
                           </Link>
                         </li>
