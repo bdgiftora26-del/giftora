@@ -15,6 +15,14 @@ export type SidebarCategory = {
   icon?: string | null
   href: string
   isActive: boolean
+  children?: SidebarSubcategory[]
+}
+
+type SidebarSubcategory = {
+  id: number
+  slug: string
+  name: string
+  href: string
 }
 
 type WidgetProduct = {
@@ -73,15 +81,29 @@ export function Sidebar({
           <nav className="sidebar-nav">
             {categories.map((c) => {
               const active = activeSlug ? c.slug === activeSlug : false
+              const hasChildren = c.children && c.children.length > 0
               return (
-                <Link
-                  key={c.id}
-                  href={c.href}
-                  className={`sidebar-item ${active ? 'sidebar-item-active' : ''}`}
-                >
-                  <span className="sidebar-arrow">›</span>
-                  <span className="sidebar-label">{c.name}</span>
-                </Link>
+                <div key={c.id} className="sidebar-item-group">
+                  <Link
+                    href={c.href}
+                    className={`sidebar-item ${active ? 'sidebar-item-active' : ''}`}
+                  >
+                    <span className="sidebar-arrow">›</span>
+                    <span className="sidebar-label">{c.name}</span>
+                  </Link>
+                  {hasChildren && (
+                    <ul className="sidebar-subnav">
+                      {c.children!.map((sub) => (
+                        <li key={sub.id}>
+                          <Link href={sub.href} className="sidebar-subitem">
+                            <span className="sidebar-subarrow">·</span>
+                            <span>{sub.name}</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               )
             })}
           </nav>

@@ -121,27 +121,20 @@ export function Header() {
             />
           </Link>
           <div className="logo-meta">
-            <span className="logo-tagline">Serving Since 2004</span>
-            <div className="header-socials">
-              <a
-                href="https://wa.me/8801719818182"
-                aria-label="WhatsApp"
-                className="social-icon social-whatsapp"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <WhatsAppIcon size={14} />
-              </a>
-              <a
-                href="viber://chat?number=%2B8801719818182"
-                aria-label="Viber"
-                className="social-icon social-viber"
-              >
-                <ViberIcon size={14} />
-              </a>
-            </div>
-            <a href="tel:+8801719818182" className="header-phone">
-              +880 1719-818182
+            <a
+              href="https://wa.me/8801719818182"
+              aria-label="Chat on WhatsApp"
+              className="header-whatsapp-btn"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="header-whatsapp-icon">
+                <WhatsAppIcon size={22} />
+              </span>
+              <span className="header-whatsapp-text">
+                <span className="header-whatsapp-label">Chat on WhatsApp</span>
+                <small className="header-whatsapp-number">+880 1719-818182</small>
+              </span>
             </a>
           </div>
         </div>

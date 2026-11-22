@@ -39,7 +39,23 @@ async function buildHomeData(LOCALE: string = 'en') {
   const catMap = new Map<string, number[]>()
   const sidebarCategories = allCats.map((c) => {
     catMap.set(c.slug, [c.id, ...c.children.map((ch) => ch.id)])
-    return { id: c.id, slug: c.slug, name: c.i18n[0]?.name || c.slug, icon: c.icon, href: `/${c.slug}`, isActive: true }
+    return {
+      id: c.id,
+      slug: c.slug,
+      name: c.i18n[0]?.name || c.slug,
+      icon: c.icon,
+      href: `/${c.slug}`,
+      isActive: true,
+      // Children (subcategories) — already filtered to isActive:true in the
+      // query above. Each subcategory gets its own deep link: parent/child
+      // slug, matching the existing catalogue route pattern.
+      children: c.children.map((ch) => ({
+        id: ch.id,
+        slug: ch.slug,
+        name: ch.i18n[0]?.name || ch.slug,
+        href: `/${c.slug}/${ch.slug}`,
+      })),
+    }
   })
 
   // Step 2: All data in parallel
