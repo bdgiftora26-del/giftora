@@ -9,22 +9,29 @@
    and renders in the brand's chosen typeface. The woff2 files live in
    public/fonts/ and Next.js serves them at /fonts/... from the site
    origin. Only the Regular is used by the slogan; Italic is included
-   for any future emphasis. font-display: swap lets the slogan render
-   in the fallback while the woff2 streams in, then re-renders in
-   Halder Sourik once ready. */
+   for any future emphasis.
+
+   font-display: block (not swap) — paired with <link rel="preload"> in
+   layout.tsx, this makes the browser wait briefly for the woff2 instead
+   of showing the fallback first. That avoids the 'starts big, shrinks
+   small' re-flow the user saw: a Latin-only fallback is taller per
+   glyph than Halder Sourik, so swap caused a visible size jump. With
+   preload + block, the woff2 is usually ready before first paint, and
+   even if not, the text stays invisible for up to ~3s instead of
+   showing the wrong-size font. */
 @font-face {
   font-family: 'Halder Sourik';
   src: url('/fonts/HalderSourik-Regular.woff2') format('woff2');
   font-weight: 400 700;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: 'Halder Sourik';
   src: url('/fonts/HalderSourik-Italic.woff2') format('woff2');
   font-weight: 400 700;
   font-style: italic;
-  font-display: swap;
+  font-display: block;
 }
 
 @theme inline {
@@ -314,7 +321,18 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   min-width: 0;
 }
 .header-slogan-text {
+  /* Background is 200% wide so we can sweep the gradient across the text
+     from left to right. Start position 0% means the gradient's left edge
+     (brand red) sits on the first glyph; the right half (brand blue) is
+     parked off to the right, waiting. The header-slogan-shimmer keyframe
+     moves background-position 0% → 100% over 2.6s, so the visible colours
+     travel left→right across every glyph in turn — 'one letter at a
+     time' as the user asked. animation-fill-mode: forwards freezes it
+     at the end position so the final state (red→blue gradient sitting
+     across the text as designed) stays. */
   background: linear-gradient(90deg, var(--c-brand-red) 0%, var(--c-brand-blue) 100%);
+  background-size: 200% 100%;
+  background-position: 0% 0%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -336,6 +354,22 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
      but filter:drop-shadow can). Combined with weight 700 of the brand
      font the slogan reads as solid and bold instead of a thin outline. */
   filter: drop-shadow(0 0 0.4px var(--c-brand-red)) drop-shadow(0 0 0.4px var(--c-brand-blue));
+  /* One-shot left-to-right colour sweep on every page load. The sweep
+     reveals the brand-red → brand-blue gradient across the slogan
+     glyph-by-glyph (via the 200%-wide background scrolling into place),
+     then holds the final gradient. Honours prefers-reduced-motion so
+     users who opted out of motion see the final gradient immediately. */
+  animation: header-slogan-shimmer 2.6s ease-out 1 forwards;
+}
+@keyframes header-slogan-shimmer {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 100% 0%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .header-slogan-text {
+    animation: none;
+    background-position: 100% 0%;
+  }
 }
 .header-welcome {
   font-size: 13px; color: #444;
