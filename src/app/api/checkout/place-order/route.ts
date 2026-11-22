@@ -24,6 +24,13 @@ const BKASH_NUMBER_RE = /^(?:\+?880|0)1[3-9]\d{8}$/
 // bKash TrxID — 8-16 alphanumeric.
 const BKASH_TRXID_RE = /^[A-Z0-9]{8,16}$/
 
+// Minimum order in USD. Enforced both client-side (cart page hides the
+// checkout button + shows a notice) and here on the server (the place-order
+// API rejects any cart below this). 30 USD ≈ 3300 BDT at the default rate
+// of 0.0091, but we convert dynamically against the active currency so the
+// threshold stays accurate if the admin updates rates.
+const MIN_ORDER_USD = 30
+
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
   const { provider, txnRef, items, couponCode, bkashSenderNumber } = body as {
@@ -181,6 +188,20 @@ export async function POST(req: Request) {
     })
   }
 
+  // Minimum order enforcement — server-side. Convert subtotal to USD using
+  // the active currency rate and reject if below $30. The client cart page
+  // also blocks checkout below this amount, but the API check stops anyone
+  // calling /api/checkout/place-order directly with a smaller cart.
+  const subtotalUsd = subtotalBdt * currency.rateFromBdt
+  if (subtotalUsd < MIN_ORDER_USD) {
+    return NextResponse.json(
+      {
+        error: `Minimum order amount is $${MIN_ORDER_USD}. Your cart totals $${subtotalUsd.toFixed(2)}. Please add more items.`,
+      },
+      { status: 400 },
+    )
+  }
+
   // Batch 2: coupon + city in parallel (only if needed).
   let discountBdt = 0
   let couponId: number | undefined
@@ -284,6 +305,7 @@ export async function POST(req: Request) {
         orderId: order.id,
         recipientName: delivery.recipientName,
         recipientPhone: delivery.recipientPhone,
+        backupPhone: delivery.backupPhone || null,
         address: delivery.address,
         area: delivery.area,
         cityId: delivery.cityId,
