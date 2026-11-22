@@ -1,27 +1,32 @@
-/* Design tokens — BDGift.com clone. Colors picked from reference screenshots. */
+/* Design tokens — Giftora brand palette.
+   Primary   = pink   #FC4563  (main nav, headers, footer, primary CTAs)
+   Secondary = purple #6713A6  (hovers, gradients, dark accents) */
 :root {
-  /* Brand — bdgift.com palette */
-  --c-brand-red: #cc0000;          /* main nav, section headers, footer */
-  --c-brand-red-dark: #990000;     /* footer dark red */
-  --c-brand-red-light: #e62e2b;    /* hover/gradient */
-  --c-brand-blue: #2b4cb8;         /* top utility bar */
-  --c-brand-blue-light: #4267b2;   /* Details button, links */
-  --c-brand-blue-link: #0066cc;    /* product name links */
-  --c-brand-orange: #ff6600;       /* sub-nav strip, accent */
+  /* Brand — primary pink (#FC4563) family */
+  --c-brand-red: #FC4563;          /* = primary pink — main nav, section headers, footer */
+  --c-brand-red-dark: #6713A6;     /* = secondary purple — hover/dark accents */
+  --c-brand-red-light: #fd6f87;    /* lighter pink for hover gradients */
+  /* Brand — secondary purple (#6713A6) family — replaces the old blue */
+  --c-brand-blue: #6713A6;          /* top utility bar now purple */
+  --c-brand-blue-light: #8b3bc7;   /* Details button, links */
+  --c-brand-blue-link: #6713A6;    /* product name links */
+  --c-brand-orange: #FF6B85;       /* accent stays in the pink family */
   --c-brand-green: #28a745;        /* Add to Cart, Checkout CTA */
   --c-brand-green-dark: #1e7e34;
 
-  /* Aliases for storefront components */
+  /* Aliases for storefront components — all blue aliases now point to the
+     secondary purple brand color so any component that referenced
+     --c-blue* picks up the new palette automatically. */
   --c-green: #28a745;
   --c-green-dark: #1e7e34;
   --c-green-soft: #eaf5e4;
-  --c-red: #cc0000;
-  --c-red-orange: #e0492f;
-  --c-orange: #ff6600;
+  --c-red: #FC4563;
+  --c-red-orange: #fd6f87;
+  --c-orange: #FF6B85;
   --c-orange-dark: #d9730e;
-  --c-blue: #2b4cb8;
-  --c-blue-link: #0066cc;
-  --c-blue-btn: #4267b2;
+  --c-blue: #6713A6;
+  --c-blue-link: #6713A6;
+  --c-blue-btn: #8b3bc7;
   --c-teal: #2fa6a0;
   --c-lime: #9ec93f;
   --c-pink: #f6c6d4;
