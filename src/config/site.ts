@@ -21,7 +21,7 @@ export const siteConfig = {
   defaultCitySlug: 'dhaka',
   orderPrefix: 'BG',
   defaultCurrency: 'USD',
-  currencies: ['USD', 'AUD', 'GBP', 'CAD', 'EUR', 'INR', 'SGD'] as const,
+  currencies: ['USD', 'AUD', 'GBP', 'CAD', 'EUR', 'INR', 'SGD', 'AED'] as const,
   locales: ['en', 'bn'] as const,
   defaultLocale: 'en',
   // Manual payment receivers — shown to customers at checkout so they know

@@ -1,7 +1,15 @@
 import { Sidebar } from '@/components/layout/Sidebar'
 import { toNumber } from '@/lib/money'
 
-type SidebarCategory = { id: number; slug: string; name: string; icon?: string | null; href: string; isActive: boolean }
+type SidebarCategory = {
+  id: number
+  slug: string
+  name: string
+  icon?: string | null
+  href: string
+  isActive: boolean
+  children?: { id: number; slug: string; name: string; href: string }[]
+}
 
 export function HomeSidebar({
   categories,

@@ -28,7 +28,7 @@ export async function getCurrency(code: string): Promise<CurrencyInfo> {
 }
 
 export function currencyFromCookie(cookieValue?: string): string {
-  if (cookieValue && ['USD', 'BDT', 'GBP', 'AUD', 'CAD', 'EUR'].includes(cookieValue)) {
+  if (cookieValue && ['USD', 'BDT', 'GBP', 'AUD', 'CAD', 'EUR', 'AED'].includes(cookieValue)) {
     return cookieValue
   }
   return 'USD'

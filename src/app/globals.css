@@ -168,25 +168,43 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   display: flex; flex-direction: column; gap: 4px;
   margin-top: 4px;
 }
-.logo-tagline {
-  font-size: 13px; color: #1a6b5a; font-weight: 700; letter-spacing: 0.3px;
-}
-.header-socials { display: flex; gap: 6px; }
-.social-icon {
-  width: 26px; height: 26px; border-radius: 5px;
+/* Single big WhatsApp button — replaces the old "Serving Since 2004"
+   tagline + WhatsApp/Viber icon cluster + plain phone link. The user
+   asked for one prominent WhatsApp CTA and no other icons. */
+.header-whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #25d366;
   color: #fff;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+  min-height: 44px;
+}
+.header-whatsapp-btn:hover {
+  background: #1da851;
+  text-decoration: none;
+  box-shadow: 0 3px 10px rgba(37, 211, 102, 0.45);
+  transform: translateY(-1px);
+}
+.header-whatsapp-icon {
   display: inline-flex; align-items: center; justify-content: center;
-  text-decoration: none;
+  flex-shrink: 0;
 }
-.social-whatsapp { background: #25d366; }
-.social-whatsapp:hover { background: #1da851; }
-.social-viber { background: #7c529e; }
-.social-viber:hover { background: #6a4485; }
-.header-phone {
-  font-size: 15px; font-weight: 700; color: #1a1a2e;
-  text-decoration: none;
+.header-whatsapp-text {
+  display: flex; flex-direction: column; line-height: 1.2;
 }
-.header-phone:hover { color: var(--c-brand-red); }
+.header-whatsapp-label {
+  font-size: 14px; font-weight: 700;
+}
+.header-whatsapp-number {
+  font-size: 11px; font-weight: 600; opacity: 0.92;
+}
 
 /* Right side — welcome + cart info */
 .header-right {
@@ -341,6 +359,29 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
 .sidebar-arrow { color: var(--c-brand-red); font-size: 14px; font-weight: 700; display: inline-flex; width: 16px; justify-content: center; flex-shrink: 0; }
 .sidebar-item-active .sidebar-arrow { color: var(--c-brand-red-dark); }
 .sidebar-label { flex: 1; word-break: break-word; }
+
+/* Subcategory list under a top-level category in the sidebar. Indented,
+   smaller text, pink dots so the hierarchy is obvious at a glance. */
+.sidebar-item-group { display: flex; flex-direction: column; }
+.sidebar-subnav {
+  list-style: none; margin: 0; padding: 0 0 4px 0;
+  border-left: 1px solid var(--c-line);
+  margin-left: 8px;
+  display: flex; flex-direction: column;
+}
+.sidebar-subitem {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 6px 5px 10px;
+  font-size: 11.5px; color: var(--c-text-soft);
+  text-decoration: none; border-radius: 0 2px 2px 0;
+}
+.sidebar-subitem:hover {
+  color: var(--c-brand-red); background: #fff5f5; text-decoration: none;
+}
+.sidebar-subarrow {
+  color: var(--c-brand-red); font-weight: 700; font-size: 12px;
+  flex-shrink: 0;
+}
 .sidebar-currency { padding: 10px 12px; border-top: 2px solid var(--c-brand-red); }
 .sidebar-currency-label { display: block; font-size: 11px; color: var(--c-text-soft); margin-bottom: 4px; }
 .sidebar-currency-select { width: 100%; }

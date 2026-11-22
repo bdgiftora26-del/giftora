@@ -8,7 +8,7 @@ import { ChevronDown, Check, Search } from 'lucide-react'
 
 // Map currency code → flag emoji for the dropdown.
 const CURRENCY_FLAG: Record<string, string> = {
-  USD: '🇺🇸', BDT: '🇧🇩', GBP: '🇬🇧', AUD: '🇦🇺', CAD: '🇨🇦', EUR: '🇪🇺', INR: '🇮🇳', SGD: '🇸🇬',
+  USD: '🇺🇸', BDT: '🇧🇩', GBP: '🇬🇧', AUD: '🇦🇺', CAD: '🇨🇦', EUR: '🇪🇺', INR: '🇮🇳', SGD: '🇸🇬', AED: '🇦🇪',
 }
 function flagFor(code: string): string {
   return CURRENCY_FLAG[code] || '🌐'

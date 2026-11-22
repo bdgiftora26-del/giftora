@@ -52,6 +52,8 @@ const currenciesData = [
   { code: 'AUD', symbol: '$', name: 'Australian Dollar', rateFromBdt: 0.0139 },
   { code: 'CAD', symbol: '$', name: 'Canadian Dollar', rateFromBdt: 0.0125 },
   { code: 'EUR', symbol: '€', name: 'Euro', rateFromBdt: 0.0084 },
+  // UAE Dirham — 1 AED ≈ 30 BDT (pegged, ~0.0334 AED per BDT).
+  { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham', rateFromBdt: 0.0334 },
 ]
 
 const vendorsData = [
