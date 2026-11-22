@@ -48,18 +48,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://embed.tawk.to" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://embed.tawk.to" />
 
-        {/* Bengali webfonts — Hind Siliguri (used for the brand slogan and
-            any Bengali display text) + Noto Sans Bengali (a safe fallback
-            for Bengali body text). Loaded via Google Fonts with preconnect
-            so the font files start downloading during HTML parse. Weights
-            include 400 + 700 so both regular Bengali text and the bold
-            slogan render in the intended weight. */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Noto+Sans+Bengali:wght@400;700&display=swap"
-        />
+        {/* Brand Bengali font (Halder Sourik) is self-hosted and registered
+            via @font-face in globals.css — no external Google Fonts request
+            needed, so the slogan renders faster and stays on-brand even with
+            no network to fonts.googleapis.com. */}
       </head>
       <body>
         <LocaleProvider>

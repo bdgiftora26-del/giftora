@@ -4,6 +4,29 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ---------------- Brand Bengali font: Halder Sourik ----------------
+   Self-hosted (no Google Fonts request) so the slogan loads instantly
+   and renders in the brand's chosen typeface. The woff2 files live in
+   public/fonts/ and Next.js serves them at /fonts/... from the site
+   origin. Only the Regular is used by the slogan; Italic is included
+   for any future emphasis. font-display: swap lets the slogan render
+   in the fallback while the woff2 streams in, then re-renders in
+   Halder Sourik once ready. */
+@font-face {
+  font-family: 'Halder Sourik';
+  src: url('/fonts/HalderSourik-Regular.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Halder Sourik';
+  src: url('/fonts/HalderSourik-Italic.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 @theme inline {
   --color-background: var(--c-bg);
   --color-foreground: var(--c-text);
@@ -296,7 +319,10 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: var(--c-brand-red);
-  font-family: 'Hind Siliguri', 'Noto Sans Bengali', var(--font-sans);
+  /* Brand Bengali font — self-hosted Halder Sourik (uploaded by the
+     owner). Falls back to Noto Sans Bengali then the default stack so
+     the slogan never renders in Arial even if the woff2 hasn't loaded. */
+  font-family: 'Halder Sourik', 'Noto Sans Bengali', var(--font-sans);
   font-size: clamp(17px, 2vw, 24px);
   font-weight: 700;
   letter-spacing: 0.2px;
@@ -307,9 +333,8 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   max-width: 100%;
   /* Heavier feel on a gradient-clipped text: a small drop-shadow darkens
      the glyph edges (text-shadow can't tint a transparent-filled glyph,
-     but filter:drop-shadow can). Combined with weight 700 of Hind Siliguri
-     (the heaviest weight Google serves for this family) the slogan reads
-     as solid and bold instead of a thin outline. */
+     but filter:drop-shadow can). Combined with weight 700 of the brand
+     font the slogan reads as solid and bold instead of a thin outline. */
   filter: drop-shadow(0 0 0.4px var(--c-brand-red)) drop-shadow(0 0 0.4px var(--c-brand-blue));
 }
 .header-welcome {
