@@ -296,7 +296,8 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: var(--c-brand-red);
-  font-size: clamp(15px, 1.8vw, 22px);
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', var(--font-sans);
+  font-size: clamp(17px, 2vw, 24px);
   font-weight: 700;
   letter-spacing: 0.2px;
   line-height: 1.3;
@@ -304,6 +305,12 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  /* Heavier feel on a gradient-clipped text: a small drop-shadow darkens
+     the glyph edges (text-shadow can't tint a transparent-filled glyph,
+     but filter:drop-shadow can). Combined with weight 700 of Hind Siliguri
+     (the heaviest weight Google serves for this family) the slogan reads
+     as solid and bold instead of a thin outline. */
+  filter: drop-shadow(0 0 0.4px var(--c-brand-red)) drop-shadow(0 0 0.4px var(--c-brand-blue));
 }
 .header-welcome {
   font-size: 13px; color: #444;
@@ -465,7 +472,14 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   color: var(--c-brand-red-dark);
   text-shadow: 0 0 0.5px var(--c-brand-red-dark);
 }
-.sidebar-label { flex: 1; word-break: break-word; }
+.sidebar-label {
+  flex: 1; word-break: break-word;
+  /* Primary sidebar categories render in ALL CAPS so they read as
+     section headings and visually dominate their subcategory rows. */
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
 
 /* Subcategory list under a top-level category in the sidebar. Indented,
    flush against each other so the whole list reads as one block. */
@@ -849,7 +863,7 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
     padding: 4px 6px;
   }
   .header-slogan-text {
-    font-size: clamp(13px, 4vw, 16px);
+    font-size: clamp(15px, 4.5vw, 19px);
     white-space: normal;
   }
 
