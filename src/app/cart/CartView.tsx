@@ -5,6 +5,12 @@ import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { useCart, useCurrency, useT } from '@/components/providers'
 import { Price } from '@/components/Price'
+import { convertFromBdt } from '@/lib/money'
+
+// Minimum order enforced on both client and server. Matches the constant
+// in src/app/api/checkout/place-order/route.ts. If you change one, change
+// both — keep them in sync.
+const MIN_ORDER_USD = 30
 
 export function CartView() {
   const cart = useCart()
@@ -27,6 +33,16 @@ export function CartView() {
   if (appliedCoupon?.percent) discountBdt = (subtotalBdt * appliedCoupon.percent) / 100
   if (appliedCoupon?.fixed) discountBdt = appliedCoupon.fixed
   const totalBdt = Math.max(0, subtotalBdt - discountBdt)
+
+  // Minimum order check — convert the cart total to USD using the active
+  // currency rate. We use the post-discount total so a coupon can't push a
+  // sub-$30 cart past the gate. Delivery fee is intentionally excluded
+  // because it varies per city and the customer shouldn't be blocked by
+  // an unknown surcharge.
+  const rate = currency?.rateFromBdt ?? 0.0091
+  const totalUsd = convertFromBdt(totalBdt, rate)
+  const meetsMin = totalUsd >= MIN_ORDER_USD
+  const remainingUsd = Math.max(0, MIN_ORDER_USD - totalUsd)
 
   const applyCoupon = async () => {
     if (!coupon.trim()) return
@@ -178,16 +194,45 @@ export function CartView() {
               <span>{t('Cart.GrandTotal')}</span>
               <Price bdt={totalBdt} />
             </div>
+            {!meetsMin && (
+              <div className="cart-totals-row" style={{ fontSize: 11, color: 'var(--c-brand-red)' }}>
+                <span>Minimum order: ${MIN_ORDER_USD} • Need ${remainingUsd.toFixed(2)} more</span>
+              </div>
+            )}
           </div>
 
           <div className="cart-actions">
             <Link href="/catalogue" className="btn-orange">
               {t('Cart.ContinueShopping')}
             </Link>
-            <Link href="/checkout/login" className="btn-green">
-              {t('Cart.Checkout')}
-            </Link>
+            {meetsMin ? (
+              <Link href="/checkout/login" className="btn-green">
+                {t('Cart.Checkout')}
+              </Link>
+            ) : (
+              <span
+                className="btn-green"
+                style={{ opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' }}
+                title={`Minimum order is $${MIN_ORDER_USD}`}
+                aria-disabled="true"
+              >
+                {t('Cart.Checkout')}
+              </span>
+            )}
           </div>
+
+          {!meetsMin && (
+            <div className="alert alert-warn" style={{ marginTop: 12 }}>
+              <p>
+                <strong>Minimum order is ${MIN_ORDER_USD}.</strong> Your cart totals{' '}
+                <strong>${totalUsd.toFixed(2)}</strong>. Add{' '}
+                <strong>${remainingUsd.toFixed(2)}</strong> more to checkout.
+              </p>
+              <Link href="/catalogue" className="btn-orange" style={{ display: 'inline-block', marginTop: 8 }}>
+                Browse products
+              </Link>
+            </div>
+          )}
         </>
       )}
     </div>

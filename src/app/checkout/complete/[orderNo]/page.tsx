@@ -252,6 +252,9 @@ export default async function CompletePage({
             <h3 className="form-section-title">Delivery Details</h3>
             <div style={{ fontSize: 12, lineHeight: 1.7 }}>
               <p><strong>Recipient:</strong> {order.delivery.recipientName} ({order.delivery.recipientPhone})</p>
+              {order.delivery.backupPhone && (
+                <p><strong>Backup Phone:</strong> {order.delivery.backupPhone}</p>
+              )}
               <p><strong>Address:</strong> {order.delivery.address}, {order.delivery.area}, {order.delivery.city.name}</p>
               <p>
                 <strong>Date:</strong>{' '}

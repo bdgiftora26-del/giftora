@@ -654,6 +654,14 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
 .alert-error { background: #fdecea; border-color: #f5c6c0; color: #a33; }
 .alert-success { background: var(--c-green-soft); border-color: var(--c-brand-green); color: var(--c-brand-green-dark); }
 .alert-info { background: #fff8e1; border-color: #ffe082; color: #6d5800; }
+/* Warning block used by the cart minimum-order notice — uses the brand
+   pink so it stands out but matches the new palette. */
+.alert-warn {
+  background: var(--c-pink-soft);
+  border-color: var(--c-brand-red);
+  color: #8a1a2c;
+}
+.alert-warn strong { color: var(--c-brand-red-dark); }
 
 /* ---------------- Responsive ---------------- */
 @media (max-width: 1024px) {

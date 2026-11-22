@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
   const {
-    recipientName, recipientPhone, address, area, cityId,
+    recipientName, recipientPhone, backupPhone, address, area, cityId,
     deliveryDate, timeSlot, cardMessage, hideSender, notes,
   } = body
 
@@ -17,6 +17,7 @@ export async function POST(req: Request) {
   const delivery = {
     recipientName,
     recipientPhone,
+    backupPhone: backupPhone || null,
     address,
     area,
     cityId: Number(cityId),

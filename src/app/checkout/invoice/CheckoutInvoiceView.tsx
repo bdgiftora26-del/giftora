@@ -86,23 +86,23 @@ export function CheckoutInvoiceView({ loggedIn }: { loggedIn: boolean }) {
         </div>
         <div className="checkout-form-row">
           <label>First Name <span className="req">*</span></label>
-          <input name="invFirstName" required />
+          <input name="invFirstName" required placeholder="e.g. Karim" />
         </div>
         <div className="checkout-form-row">
           <label>Last Name <span className="req">*</span></label>
-          <input name="invLastName" required />
+          <input name="invLastName" required placeholder="e.g. Ahmed" />
         </div>
         <div className="checkout-form-row">
           <label>Email Address <span className="req">*</span></label>
-          <input name="invEmail" type="email" required />
+          <input name="invEmail" type="email" required placeholder="e.g. karim@example.com" />
         </div>
         <div className="checkout-form-row">
           <label>Phone No 1 <span className="req">*</span></label>
-          <input name="invPhone1" required />
+          <input name="invPhone1" required placeholder="e.g. 01712-345678" />
         </div>
         <div className="checkout-form-row">
           <label>Phone No 2</label>
-          <input name="invPhone2" />
+          <input name="invPhone2" placeholder="Optional — e.g. +8801712-345678" />
         </div>
 
         {!loggedIn && (
@@ -110,11 +110,11 @@ export function CheckoutInvoiceView({ loggedIn }: { loggedIn: boolean }) {
             <h3 className="form-section-title">Security Details</h3>
             <div className="checkout-form-row">
               <label>Choose Password <span className="req">*</span></label>
-              <input name="password" type="password" required minLength={6} />
+              <input name="password" type="password" required minLength={6} placeholder="At least 6 characters" />
             </div>
             <div className="checkout-form-row">
               <label>Confirm Password <span className="req">*</span></label>
-              <input name="confirmPassword" type="password" required minLength={6} />
+              <input name="confirmPassword" type="password" required minLength={6} placeholder="Re-enter your password" />
             </div>
           </>
         )}
@@ -122,19 +122,19 @@ export function CheckoutInvoiceView({ loggedIn }: { loggedIn: boolean }) {
         <h3 className="form-section-title">Your Address</h3>
         <div className="checkout-form-row">
           <label>Address <span className="req">*</span></label>
-          <input name="invAddress1" required />
+          <input name="invAddress1" required placeholder="House/Flat no, road, building — e.g. House 14, Road 7" />
         </div>
         <div className="checkout-form-row">
           <label>Address (line 2)</label>
-          <input name="invAddress2" />
+          <input name="invAddress2" placeholder="Optional — apartment, suite, floor" />
         </div>
         <div className="checkout-form-row">
           <label>Area/Town <span className="req">*</span></label>
-          <input name="invArea" required />
+          <input name="invArea" required placeholder="e.g. Dhanmondi, Gulshan, Banani" />
         </div>
         <div className="checkout-form-row">
           <label>Post/Zip Code</label>
-          <input name="invPostcode" />
+          <input name="invPostcode" placeholder="e.g. 1207 (optional)" />
         </div>
         <div className="checkout-form-row">
           <label>Country <span className="req">*</span></label>

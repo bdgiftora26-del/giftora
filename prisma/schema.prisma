@@ -319,6 +319,7 @@ model Delivery {
   order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   recipientName String
   recipientPhone String
+  backupPhone    String?
   address       String
   area          String
   cityId        Int

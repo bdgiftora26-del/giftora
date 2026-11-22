@@ -40,6 +40,7 @@ type OrderDetails = {
   delivery: {
     recipientName: string
     recipientPhone: string
+    backupPhone: string | null
     address: string
     area: string
     deliveryDate: string
@@ -295,6 +296,7 @@ export function OrderViewModal({ orderNo }: { orderNo: string }) {
                     <div style={{ fontSize: 13, lineHeight: 1.8, color: '#333' }}>
                       <div><strong>Recipient:</strong> {data.delivery.recipientName}</div>
                       <div><strong>Phone:</strong> {data.delivery.recipientPhone}</div>
+                      {data.delivery.backupPhone && <div><strong>Backup Phone:</strong> {data.delivery.backupPhone}</div>}
                       <div><strong>Address:</strong> {data.delivery.address}, {data.delivery.area}</div>
                       <div><strong>City:</strong> {data.delivery.city.name}</div>
                       <div><strong>Date:</strong> {new Date(data.delivery.deliveryDate).toLocaleDateString()}</div>

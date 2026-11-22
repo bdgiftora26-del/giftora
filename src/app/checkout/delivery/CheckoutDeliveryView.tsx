@@ -71,19 +71,42 @@ export function CheckoutDeliveryView({ cities }: { cities: { id: number; slug: s
         <h3 className="form-section-title">Recipient Details</h3>
         <div className="checkout-form-row">
           <label>Recipient Name <span className="req">*</span></label>
-          <input name="recipientName" required />
+          <input
+            name="recipientName"
+            required
+            placeholder="e.g. Rahim Hossain"
+          />
         </div>
         <div className="checkout-form-row">
           <label>Recipient Phone <span className="req">*</span></label>
-          <input name="recipientPhone" required />
+          <input
+            name="recipientPhone"
+            required
+            placeholder="e.g. 01712-345678"
+          />
+        </div>
+        <div className="checkout-form-row">
+          <label>Backup Phone</label>
+          <input
+            name="backupPhone"
+            placeholder="Optional — second number in case the main one is unreachable"
+          />
         </div>
         <div className="checkout-form-row">
           <label>Address <span className="req">*</span></label>
-          <input name="address" required />
+          <input
+            name="address"
+            required
+            placeholder="House/Flat no, road, building, landmark — e.g. House 14, Road 7, Block C"
+          />
         </div>
         <div className="checkout-form-row">
           <label>Area/Town <span className="req">*</span></label>
-          <input name="area" required />
+          <input
+            name="area"
+            required
+            placeholder="e.g. Dhanmondi, Gulshan, Banani"
+          />
         </div>
         <div className="checkout-form-row">
           <label>City <span className="req">*</span></label>
@@ -131,7 +154,7 @@ export function CheckoutDeliveryView({ cities }: { cities: { id: number; slug: s
         <h3 className="form-section-title">Personal Touch</h3>
         <div className="checkout-form-row" style={{ alignItems: 'flex-start' }}>
           <label style={{ marginTop: 4 }}>Greeting Card Message</label>
-          <textarea name="cardMessage" rows={3} style={{ height: 'auto' }} maxLength={200} />
+          <textarea name="cardMessage" rows={3} style={{ height: 'auto' }} maxLength={200} placeholder="e.g. Happy Birthday! Wishing you lots of love and joy. — from your sister" />
         </div>
         <div className="privacy-check">
           <input type="checkbox" name="hideSender" />
@@ -139,7 +162,7 @@ export function CheckoutDeliveryView({ cities }: { cities: { id: number; slug: s
         </div>
         <div className="checkout-form-row" style={{ alignItems: 'flex-start' }}>
           <label style={{ marginTop: 4 }}>Order Notes</label>
-          <textarea name="notes" rows={2} style={{ height: 'auto' }} maxLength={300} />
+          <textarea name="notes" rows={2} style={{ height: 'auto' }} maxLength={300} placeholder="Optional — e.g. call before delivery, surprise gift, leave at gate if no answer" />
         </div>
 
         <div className="submit-row">
