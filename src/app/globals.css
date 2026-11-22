@@ -389,17 +389,17 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   text-decoration: none;
 }
 .home-slider-img {
-  /* Keep the slider banner's full content visible on every screen size.
-     The uploaded banners are ~1200x340 (aspect 3.53:1). Using aspect-ratio
-     + object-fit:contain means on a 375px-wide phone the image renders at
-     ~375x106px — the whole banner fits, nothing gets cropped from the
-     right. On desktop the height stays 340px. object-fit:contain means
-     thin letterbox bars may show if a banner has a different ratio, which
-     is far better than silently hiding the right edge of the image. */
+  /* Slider banners are uploaded at 2172x724 (3:1 aspect ratio). Using the
+     image's own ratio means the whole banner fits on every screen size
+     with NO letterbox bars and NO right-side crop. On a 375px phone the
+     banner renders at 375x125px. On desktop we still cap the height at
+     340px (so the 3:1 ratio gives ~1020px width inside the 1170px
+     container — a small gap at the edges is hidden by the dark
+     .home-slider background). */
   width: 100%;
   height: auto;
-  aspect-ratio: 1200 / 340;
-  object-fit: contain;
+  aspect-ratio: 2172 / 724;
+  object-fit: cover;
   display: block;
   background: #000;
 }
