@@ -47,23 +47,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://ymquocspwnnfpjitziow.supabase.co" />
         <link rel="preconnect" href="https://embed.tawk.to" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://embed.tawk.to" />
-
-        {/* Preload the brand Bengali font so it's available BEFORE first
-            paint. Without this, the slogan first renders in the fallback
-            (a Latin-only sans, which is taller per glyph) and then re-flows
-            to Halder Sourik once the woff2 streams in — the visible
-            'starts big, shrinks small' flash the user saw. Preload starts
-            the fetch in parallel with the HTML, and font-display: block
-            below makes the browser hold the text invisible (up to ~3s)
-            rather than showing the wrong-size fallback first. crossOrigin
-            is required because the font is served with CORS headers. */}
-        <link
-          rel="preload"
-          href="/fonts/HalderSourik-Regular.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
       </head>
       <body>
         <LocaleProvider>

@@ -4,36 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ---------------- Brand Bengali font: Halder Sourik ----------------
-   Self-hosted (no Google Fonts request) so the slogan loads instantly
-   and renders in the brand's chosen typeface. The woff2 files live in
-   public/fonts/ and Next.js serves them at /fonts/... from the site
-   origin. Only the Regular is used by the slogan; Italic is included
-   for any future emphasis.
-
-   font-display: block (not swap) — paired with <link rel="preload"> in
-   layout.tsx, this makes the browser wait briefly for the woff2 instead
-   of showing the fallback first. That avoids the 'starts big, shrinks
-   small' re-flow the user saw: a Latin-only fallback is taller per
-   glyph than Halder Sourik, so swap caused a visible size jump. With
-   preload + block, the woff2 is usually ready before first paint, and
-   even if not, the text stays invisible for up to ~3s instead of
-   showing the wrong-size font. */
-@font-face {
-  font-family: 'Halder Sourik';
-  src: url('/fonts/HalderSourik-Regular.woff2') format('woff2');
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: block;
-}
-@font-face {
-  font-family: 'Halder Sourik';
-  src: url('/fonts/HalderSourik-Italic.woff2') format('woff2');
-  font-weight: 400 700;
-  font-style: italic;
-  font-display: block;
-}
-
 @theme inline {
   --color-background: var(--c-bg);
   --color-foreground: var(--c-text);
@@ -337,10 +307,10 @@ h1, h2, h3, h4 { margin: 0 0 8px; font-weight: 700; }
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: var(--c-brand-red);
-  /* Brand Bengali font — self-hosted Halder Sourik (uploaded by the
-     owner). Falls back to Noto Sans Bengali then the default stack so
-     the slogan never renders in Arial even if the woff2 hasn't loaded. */
-  font-family: 'Halder Sourik', 'Noto Sans Bengali', var(--font-sans);
+  /* Slogan uses the default --font-sans stack (no custom Bengali
+     webfont) — the original behaviour the site shipped with. The
+     Bengali glyphs fall back to whatever the OS provides, typically
+     Noto Sans Bengali on most systems. */
   font-size: clamp(17px, 2vw, 24px);
   font-weight: 700;
   letter-spacing: 0.2px;
