@@ -67,6 +67,11 @@ export function Header() {
           </div>
         </div>
 
+        {/* === MIDDLE: brand slogan (desktop + responsive) === */}
+        <div className="header-slogan" aria-label="Brand slogan">
+          <span className="header-slogan-text">আপনার পছন্দ, প্রিয়জনের আনন্দ</span>
+        </div>
+
         {/* === RIGHT: welcome + links + cart info === */}
         <div className="header-right">
           <div className="header-welcome">
